@@ -501,9 +501,10 @@ const config={
 // User-supplied test boards stay outside the paced learning route and always start empty.
 config.units.push({id:10,name:'截图测试',tag:'按原截图还原 · 全部从空盘开始',count:7,cap:6,lessons:[],start:55,testPack:true});
 for(const number of [89,81,80,79,78,75,74])config.levels.push({id:'screenshot-'+number,unit:10,givens:[]});
+for(let group=1;group<=5;group++)config.units.push({id:10+group,name:'百关挑战 · 第 '+group+' 组',tag:[7,8,8,9,9][group-1]+' × '+[7,8,8,9,9][group-1]+' · 空盘自由推理',count:20,cap:6,lessons:[],start:62+(group-1)*20,extraPack:true});
 config.levels.forEach(entry=>{if(entry.unit>=8)entry.givens=[];});
 function arrange(levels){const byId=new Map(levels.map(l=>[l.id,l]));return [...config.levels.flatMap(c=>byId.has(c.id)?[byId.get(c.id)]:[]),...levels.filter(l=>!config.levels.some(c=>c.id===l.id))];}
-function forLevel(level){const entry=config.levels.find(c=>c.id===level.id);return entry||{id:level.id,unit:9,givens:[]};}
+function forLevel(level){const entry=config.levels.find(c=>c.id===level.id);const expansion=level.expansion;return entry||{id:level.id,unit:expansion?.pack==='more-100-20261004'&&Number.isInteger(expansion.group)&&expansion.group>=1&&expansion.group<=5?10+expansion.group:9,givens:[]};}
 function startBoard(level){const given=forLevel(level).givens;return Array.from({length:level.size**2},(_,i)=>given.includes(i)?2:0);}
 function unitFor(level){return config.units[forLevel(level).unit];}
 function validProgress(raw,levels){const ids=new Set(levels.map(l=>l.id));return{completed:[...new Set((Array.isArray(raw?.completed)?raw.completed:[]).filter(id=>ids.has(id)))],learned:[...new Set((Array.isArray(raw?.learned)?raw.learned:[]).filter(id=>Number.isInteger(id)&&id>=0&&id<config.units.length))],current:ids.has(raw?.current)?raw.current:levels[0].id};}

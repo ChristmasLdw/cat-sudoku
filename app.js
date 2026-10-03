@@ -80,7 +80,7 @@ function levelButtons(){
  for(const unit of J.config.units){
   const inUnit=levels.map((l,index)=>({l,index})).filter(({l})=>J.unitFor(l).id===unit.id),done=inUnit.filter(({l})=>journey.completed.includes(l.id)).length;
   const section=document.createElement('details');section.className='unit-map';section.open=J.unitFor(currentLevel()).id===unit.id;
-  const summary=document.createElement('summary');summary.textContent=(unit.testPack?unit.name:'单元 '+(unit.id+1)+' · '+unit.name)+'　'+done+'/'+inUnit.length;section.append(summary);
+  const summary=document.createElement('summary');summary.textContent=((unit.testPack||unit.extraPack)?unit.name:'单元 '+(unit.id+1)+' · '+unit.name)+'　'+done+'/'+inUnit.length;section.append(summary);
   const intro=document.createElement('button');intro.className='unit-intro';intro.textContent=(journey.learned.includes(unit.id)?'复习：':'新技巧：')+unit.tag;intro.addEventListener('click',()=>{const next=inUnit.find(({l})=>!journey.completed.includes(l.id))||inUnit[0];closeDialog('levels-dialog');selectLevel(next.index);tutorial?.openUnit(unit,true);});if(unit.lessons.length)section.append(intro);
   const grid=document.createElement('div');grid.className='unit-nodes';
   for(const {l,index}of inUnit){const b=document.createElement('button');b.className='level-button';b.setAttribute('aria-current',String(index===levelIndex));b.setAttribute('aria-label',(l.source?.type==='user-screenshot'?l.name:'第 '+(index+1)+' 关')+'，'+l.size+' × '+l.size+(journey.completed.includes(l.id)?'，已完成':''));
@@ -88,13 +88,13 @@ function levelButtons(){
    if(journey.completed.includes(l.id)){const check=document.createElement('span');check.className='level-complete';check.textContent='✓';b.append(check);}
    b.addEventListener('click',()=>{closeDialog('levels-dialog');selectLevel(index);sound('erase');});grid.append(b);
   }section.append(grid);$('level-list').append(section);
- }$('level-total').textContent=J.config.units.filter(u=>!u.testPack).length+' 个单元 + 截图测试 · '+journey.completed.length+'/'+levels.length+' 关完成';$('levels-dialog').scrollTop=scroll;
+ }$('level-total').textContent=J.config.units.filter(u=>!u.testPack&&!u.extraPack).length+' 个单元 + 截图测试 + 百关挑战 · '+journey.completed.length+'/'+levels.length+' 关完成';$('levels-dialog').scrollTop=scroll;
 }
 function selectLevel(index){
   if(!Number.isInteger(index)||index<0||index>=levels.length)throw Error('关卡编号无效');finishStroke(true);tutorial?.stop();lastTap=null;clearHint();tick();levelIndex=index;manualCheck=false;focused=0;
   const l=currentLevel();colors=l.regionColors||defaultColors;if(!sessions.has(l.id))sessions.set(l.id,newGame(l));
   $('level-title').textContent=l.source?.type==='user-screenshot'?l.name:'第 '+(index+1)+' 关';$('level-subtitle').textContent=l.size+' × '+l.size+(game().givens.length?' · '+game().givens.length+' 只猫已就位':(l.source?' · 原始空盘':' · 自由推理'));
-  const unit=J.unitFor(l),unitLevels=levels.filter(item=>J.unitFor(item).id===unit.id);$('unit-name').textContent=unit.testPack?unit.name:'单元 '+(unit.id+1)+' · '+unit.name;$('unit-position').textContent=(unitLevels.findIndex(item=>item.id===l.id)+1)+' / '+unitLevels.length;$('unit-focus').textContent=unit.tag;
+  const unit=J.unitFor(l),unitLevels=levels.filter(item=>J.unitFor(item).id===unit.id);$('unit-name').textContent=(unit.testPack||unit.extraPack)?unit.name:'单元 '+(unit.id+1)+' · '+unit.name;$('unit-position').textContent=(unitLevels.findIndex(item=>item.id===l.id)+1)+' / '+unitLevels.length;$('unit-focus').textContent=unit.tag;
   journey.current=l.id;saveJourney();
   $('board').style.setProperty('--n',l.size);$('board').setAttribute('aria-rowcount',l.size);$('board').setAttribute('aria-colcount',l.size);$('board').replaceChildren();cells=[];
   for(let r=0;r<l.size;r++){const row=document.createElement('div');row.setAttribute('role','row');row.style.display='contents';for(let c=0;c<l.size;c++){
