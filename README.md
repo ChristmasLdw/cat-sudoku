@@ -1,10 +1,14 @@
 # 猫猫数独 Cat Sudoku
 
+[在线游戏](https://christmasldw.com/cat-sudoku/) · [独立仓库](https://github.com/ChristmasLdw/cat-sudoku)
+
+本仓库独立维护游戏源码、关卡与测试；网站首页由 `ChristmasLdw/christmasldw-homepage` 仓库维护，仅通过卡片链接进入游戏。
+
 原创、无依赖的浏览器逻辑游戏。界面和猫咪 SVG 为本项目编写，没有使用参考截图的商标或图像。55 个原有关卡为本项目生成；另有 7 个测试棋盘按用户提供的截图还原颜色区域。纯静态文件，无需数据库、账号、API Key 或安装依赖。
 
 ## 直接玩
 
-- 单文件：打开随包提供的 cat-garden.html（在源码文件夹外）。所有样式、关卡和逻辑都已内嵌，可离线运行。
+- 单文件：运行 `node build-single.cjs`，打开生成的 `dist/cat-sudoku.html`。所有样式、关卡和逻辑都已内嵌，可离线运行。
 - 源码版：保持 index.html、styles.css、engine.js、trial.js、levels.js、hints.js、tutorial.js、journey.js、app.js 在同一文件夹，双击 index.html。
 - 使用支持 JavaScript 的现代 Chrome、Edge、Firefox 或 Safari。浏览器预览测试使用 Chromium；未逐一测试其他浏览器。自动浏览器不允许 file:// 导航，因此本地双击入口没有做自动端到端验证；已校验单文件脚本语法与内嵌资源，并在 HTTP 预览验证同一套游戏源码。
 
@@ -14,7 +18,7 @@
 2. 上传上述九个源码文件，保持文件名和相对位置。
 3. 访问网站的 /cat-sudoku/index.html。没有构建命令或后端服务。
 
-也可以只上传单文件 cat-garden.html，然后访问它的地址。不要把代码粘贴到会过滤 script 标签的富文本编辑器；应当作为 HTML 文件上传。
+也可以只上传生成的 `dist/cat-sudoku.html`，然后访问它的地址。不要把代码粘贴到会过滤 script 标签的富文本编辑器；应当作为 HTML 文件上传。
 
 上传目录可以换名字，代码使用相对资源路径。你的服务器应以 text/html 提供 HTML，以 text/css 提供 CSS，以 text/javascript 或 application/javascript 提供 JavaScript。
 
@@ -188,7 +192,7 @@ solve 的第二个参数是最多返回的答案数：结果长度为 0 表示�
     node tests-visual-hints.cjs
     node build-single.cjs
 
-最后一条命令会在源码文件夹的上一级生成 cat-garden.html。修改源码后重新生成，避免单文件与源码版本不同。无需 npm install。
+最后一条命令会在仓库内生成 `dist/cat-sudoku.html`。修改源码后重新生成，避免单文件与源码版本不同。无需 npm install。
 
 已检查：62 个关卡的连通性与独立全排列唯一解；空盘、标记、同行、同列、同区、全部八邻格冲突、通关和错误数据。浏览器检查覆盖点击/键盘操作、拖动标记、整笔撤销、连续擦除、涂抹保护猫咪、设置开关、撤销/重置、暂停/继续、通关/下一关及窄屏布局。音效由 Web Audio 合成，最终听感和实体设备振动需要在你的设备上体验。
 

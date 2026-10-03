@@ -7,6 +7,7 @@ html=html.replace(/<link rel="stylesheet" href="styles\.css(?:\?[^\"]*)?">/,()=>
 html=html.replace(/<script src="(?:engine|trial|levels|hints|tutorial|journey|app)\.js(?:\?[^\"]*)?" defer><\/script>/g,'');
 const js=['engine.js','trial.js','levels.js','hints.js','tutorial.js','journey.js','app.js'].map(read).join('\n').replace(/<\/script/gi,'<\\/script');
 html=html.replace('</body>',()=>'<script>\n'+js+'\n</script>\n</body>');
-const output=path.resolve(__dirname,'..','cat-garden.html');
+const output=path.resolve(__dirname,'dist','cat-sudoku.html');
+fs.mkdirSync(path.dirname(output),{recursive:true});
 fs.writeFileSync(output,html);
 console.log('Created '+output);
