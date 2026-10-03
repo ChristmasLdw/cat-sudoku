@@ -1,0 +1,12 @@
+'use strict';
+const fs=require('node:fs');
+const path=require('node:path');
+const read=name=>fs.readFileSync(path.join(__dirname,name),'utf8');
+let html=read('index.html');
+html=html.replace(/<link rel="stylesheet" href="styles\.css(?:\?[^\"]*)?">/,()=>'<style>\n'+read('styles.css')+'\n</style>');
+html=html.replace(/<script src="(?:engine|trial|levels|hints|tutorial|journey|app)\.js(?:\?[^\"]*)?" defer><\/script>/g,'');
+const js=['engine.js','trial.js','levels.js','hints.js','tutorial.js','journey.js','app.js'].map(read).join('\n').replace(/<\/script/gi,'<\\/script');
+html=html.replace('</body>',()=>'<script>\n'+js+'\n</script>\n</body>');
+const output=path.resolve(__dirname,'..','cat-garden.html');
+fs.writeFileSync(output,html);
+console.log('Created '+output);
