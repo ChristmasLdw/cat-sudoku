@@ -10,6 +10,7 @@ const { Pool } = require('pg');
 const {validateAttempt,period}=require('./scoring.cjs');
 const catalog=require('./catalog.json');
 const catalogIds=new Set(catalog.map(l=>l.id));
+const economy=require('./economy.cjs');
 const sms = require('./providers/sms');
 const wechat = require('./providers/wechat');
 
@@ -256,6 +257,7 @@ async function initSchema() {
       select player_id,day,completed_count-previous_count,previous_count,completed_count,updated_at
       from prior where previous_count is not null and completed_count>previous_count
       on conflict do nothing;
+    ${economy.schema}
     create table if not exists sessions (
       token       text        primary key,
       player_id   bigint      not null references players(id) on delete cascade,
@@ -425,6 +427,9 @@ async function recordAttempt(playerId,body){
   await db.query('insert into progress(player_id) values($1) on conflict do nothing',[playerId]);
   // Serialize this player's completions; simultaneous devices cannot replace one another.
   await db.query('select player_id from progress where player_id=$1 for update',[playerId]);
+  const wallet=await economy.lock(db,playerId);
+  const used=await db.query("select 1 from economy_ledger where player_id=$1 and attempt_id=$2 and kind='use' limit 1",[playerId,run.id]);
+  if(used.rowCount)run.hints=Math.max(1,run.hints);
   const inserted=await db.query(`insert into attempts(player_id,id,level_id,elapsed_ms,hints,conflicts,guides)
     values($1,$2,$3,$4,$5,$6,$7) on conflict do nothing returning id`,[playerId,run.id,run.levelId,run.elapsedMs,run.hints,run.conflicts,run.guides]);
   let firstClear=false;
@@ -433,7 +438,8 @@ async function recordAttempt(playerId,body){
    firstClear=Boolean(first.rowCount);
    await db.query(`update progress set completed=(select coalesce(jsonb_agg(distinct v),'[]'::jsonb) from jsonb_array_elements(completed || $2::jsonb) v), reached=greatest(reached,$3),updated_at=now() where player_id=$1`,[playerId,JSON.stringify([run.levelId]),catalog.findIndex(l=>l.id===run.levelId)+1]);
   }
-  await db.query('commit');return {ok:true,firstClear};
+  const grant=await economy.award(db,playerId,run,firstClear,Boolean(inserted.rowCount),wallet);
+  await db.query('commit');return {ok:true,firstClear,...grant};
  }catch(e){await db.query('rollback');throw e;}finally{db.release();}
 }
 async function loadResults(playerId){
@@ -998,6 +1004,11 @@ async function route(req, res) {
   if ((method === 'POST' && path === '/complete') || (method === 'GET' && path === '/results')) {
     const player=await loadPlayer(req);if(!player){sendJson(res,401,{error:'unauthenticated'});return;}
     sendJson(res,200,method==='POST'?await recordAttempt(player.id,await readJson(req,res)):{results:await loadResults(player.id)});return;
+  }
+  if((method==='GET'&&path==='/economy')||(method==='POST'&&['/economy/buy','/economy/use'].includes(path))){
+    const player=await loadPlayer(req);if(!player)return sendJson(res,401,{error:'unauthenticated'});
+    if(method==='POST'&&req.headers.origin&&req.headers.origin!==PUBLIC_ORIGIN)return sendJson(res,403,{error:'origin'});
+    return sendJson(res,200,method==='GET'?{wallet:await economy.balance(pool,player.id)}:await economy.operate(pool,player.id,path.split('/').pop(),await readJson(req),catalog));
   }
   if (method === 'GET' && path === '/leaderboard') return handleLeaderboard(req, res, url);
   if (method === 'POST' && path === '/auth/phone/send') return handlePhoneSend(req, res);

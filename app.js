@@ -215,7 +215,7 @@ function absorbAccount(data){
 async function signOut(){
   try{await apiFetch('/auth/logout',{method:'POST'});}catch(_){}
   account={signedIn:false};apiCache=null;apiNote='';sessionCount=null;renderedPanel=null;
-  syncAccountUi();go('me',false);renderMe();renderRank();
+  syncAccountUi();loadEconomy();go('me',false);renderMe();renderRank();
 }
 
 function renderMe(){
@@ -602,7 +602,7 @@ function panelAbout(parent){
     fact('微信服务',services.wechat?.available?'已接入':(services.wechat?.provider?'配置不完整':'待配置'))
   );
   parent.append(facts);
-  parent.append(el('p','page-note','棋盘、关卡和音效全部在本地运行，不联网也能玩。登录后只有通关记录、设置和排行榜会上传。'));
+  parent.append(el('p','page-note','棋盘、关卡和音效在本地运行，不联网也能玩。账号的通关记录、设置、金币和道具联网同步；使用道具时会提交当前棋盘用于校验。'));
 }
 
 // ---- 二次确认弹窗：解绑、清除、注销都走这里，避免误触
@@ -674,6 +674,102 @@ function rankAvatar(entry){
   else span.textContent=(entry.name||'猫').trim().slice(0,1);
   return span;
 }
+// ---- Optional economy. Guest wallets stay local; account balances are server-owned.
+const Q=window.CatEconomy,GUEST_WALLET='cat-sudoku-guest-wallet-v1';
+let economyWallet=null,economyWalletOwner=null,economyBusy=false,economyNote='';
+const itemArt={bell:'<path d="M7 15V10a5 5 0 0 1 10 0v5l2 3H5l2-3Zm3 6h4M12 2v2"/>',brush:'<path d="m14 3 7 7-9 9-7-7 9-9ZM3 14l7 7M5 16l-2 3m4-1-2 3M12 5l7 7"/>'};
+function economyOwner(){return resultOwner()||'guest';}
+function guestWallet(){let w=store.get(GUEST_WALLET);if(!w||!w.wallet){w={wallet:Q.fresh(),completed:journey.completed.slice(),receipts:{},replays:{}};store.set(GUEST_WALLET,w);}return w;}
+function acceptWallet(w,owner){if(owner!==economyOwner())return;if(economyWalletOwner!==owner||!economyWallet||w.revision>=economyWallet.revision){economyWallet=w;economyWalletOwner=owner;}renderEconomy();}
+async function loadEconomy(){
+ if(!account)return;const owner=economyOwner();
+ if(economyWalletOwner!==owner){economyWallet=null;economyWalletOwner=owner;}
+ try{const w=owner==='guest'?guestWallet().wallet:(await apiFetch('/economy')).wallet;economyNote='';acceptWallet(w,owner);}catch(_){economyNote='暂时无法读取账户余额，点击重试。';renderEconomy();}
+}
+function pendingEconomy(){return store.get('cat-sudoku-economy-pending:'+economyOwner());}
+function renderEconomy(){
+ const w=economyWalletOwner===economyOwner()?economyWallet:null,waiting=Boolean(pendingEconomy());
+ $('shop-coins').textContent=w?w.coins:'—';$('bag-count').textContent=w?w.bell+w.brush:'·';
+ $('shop-account-note').textContent=economyNote||(economyOwner()==='guest'?'游客资产只保存在本机；登录后使用独立的账户钱包，不合并游客金币。':'猫爪币和道具已跟随账号保存。');
+ $('economy-retry').hidden=!waiting&&!economyNote;$('economy-retry').disabled=economyBusy;
+ $('bag-retry').hidden=!waiting;$('bag-retry').disabled=economyBusy;
+ for(const [id,inGame] of [['shop-items',false],['bag-items',true]]){
+  const box=$(id);box.replaceChildren();
+  for(const [item,info] of Object.entries(Q.ITEMS)){
+   const card=el('article','supply '+item),icon=el('span','supply-icon');icon.setAttribute('aria-hidden','true');icon.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">'+itemArt[item]+'</svg>';
+   const copy=el('div');copy.append(el('h2',null,info.name),el('p',null,info.description));
+   const foot=el('div','supply-foot'),btn=el('button',null,inGame?'使用 1 个':info.price+' 币 · 兑换');btn.type='button';btn.dataset.item=item;btn.dataset.action=inGame?'use':'buy';btn.setAttribute('aria-label',(inGame?'使用':'兑换')+info.name);
+   btn.disabled=economyBusy||waiting||!w||(inGame?!w[item]||game()?.won||game()?.paused||Boolean(game()?.trial):w.coins<info.price);
+   foot.append(el('small',null,'已拥有 '+(w?w[item]:'—')),btn);card.append(icon,copy,foot);box.append(card);
+  }
+ }
+ $('bag-close').disabled=economyBusy;$('bag-shop').disabled=economyBusy;$('bag-dialog').setAttribute('aria-busy',String(economyBusy));
+}
+function showReward(grant){
+ const box=$('win-reward');box.replaceChildren();
+ if(grant.legacy){box.textContent='历史成绩已同步，本次不重复发放奖励。';return;}
+ box.append(el('b',null,grant.coins?'✦ +'+grant.coins+' 猫爪币':'今日重玩奖励已领满'));
+ const detail=[grant.first?'首次通关':'重玩奖励',grant.bonus?'含独立无冲突奖励 +10':'',grant.bell?'新过 5 关 · 寻猫铃 +1':''].filter(Boolean).join(' · ');box.append(el('div',null,detail));
+}
+function guestReward(run){
+ const w=guestWallet(),key='reward:'+run.id;if(w.receipts[key])return w.receipts[key];
+ const first=!w.completed.includes(run.levelId),day=Q.day(),grant=Q.reward(first,run,w.wallet.newClears,w.replays[day]||0);
+ w.wallet.coins+=grant.coins;w.wallet.bell+=grant.bell;w.wallet.revision++;
+ if(first){w.completed.push(run.levelId);w.wallet.newClears++;}else if(grant.coins)w.replays[day]=(w.replays[day]||0)+1;
+ w.receipts[key]=grant;store.set(GUEST_WALLET,w);acceptWallet(w.wallet,'guest');return grant;
+}
+function guestOperation(op){
+ const w=guestWallet(),{body,kind}=op;if(w.receipts[body.id])return {...w.receipts[body.id],wallet:w.wallet};
+ const info=Q.ITEMS[body.item];let effect=null;
+ if(kind==='buy'){if(w.wallet.coins<info.price)throw new Error('猫爪币不够，通关后再来吧。');w.wallet.coins-=info.price;w.wallet[body.item]++;}
+ else{effect=Q.effect(levels.find(l=>l.id===body.levelId),body.board,body.item);if(w.wallet[body.item]<1)throw new Error('道具用完了，去商店补给吧。');w.wallet[body.item]--;}
+ w.wallet.revision++;const result={ok:true,item:body.item,effect};w.receipts[body.id]=result;store.set(GUEST_WALLET,w);return {...result,wallet:w.wallet};
+}
+async function runEconomy(op){
+ if(economyBusy)return;const owner=economyOwner(),key='cat-sudoku-economy-pending:'+owner;
+ economyBusy=true;economyNote='';store.set(key,op);renderEconomy();$('bag-note').textContent='正在准备道具…';
+ try{
+  const data=owner==='guest'?guestOperation(op):await apiFetch('/economy/'+op.kind,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(op.body),signal:AbortSignal.timeout(15000)});
+  store.set(key,null);if(owner!==economyOwner())return;acceptWallet(data.wallet,owner);
+  if(op.kind==='buy'){toast(Q.ITEMS[op.body.item].name+' +1，已放入背包');sound('cat');}
+  else{
+   const g=game(),same=g.attemptId===op.body.attemptId&&currentLevel().id===op.body.levelId&&JSON.stringify(g.board)===JSON.stringify(op.body.board);
+   if(same){
+    // Consumption is not part of board history: undo can revert marks, never mint items.
+    record('item');g.hints++;for(const i of data.effect.targets)g.board[i]=data.effect.value;g.started=true;
+    $('bag-dialog').close();clearHint();render();for(const i of data.effect.targets){feedback(i,data.effect.value,true);const cell=cells[i];cell?.classList.add('item-flash');setTimeout(()=>cell?.classList.remove('item-flash'),2400);}
+    if(!g.won)toast(op.body.item==='bell'?'寻猫铃找到了一只猫':'排除刷标好了 '+data.effect.targets.length+' 格');
+   }else{
+    const level=levels.find(l=>l.id===op.body.levelId),number=levels.findIndex(l=>l.id===op.body.levelId)+1;
+    const positions=data.effect.targets.map(i=>(Math.floor(i/level.size)+1)+'行'+(i%level.size+1)+'列').join('、');
+    const note='上次道具已生效（第 '+number+' 关）：'+positions+(data.effect.value===2?'是猫':'可标 ×')+'。当前棋盘已变化，本次未再扣道具。';
+    $('bag-note').textContent=note;economyNote=note;
+   }
+  }
+ }catch(error){
+  // Keep the exact request ID after ambiguous network failures; retry retrieves the receipt.
+  if(error.status&&error.status<500||owner==='guest')store.set(key,null);
+  economyNote=(error.status&&error.status<500||owner==='guest')?error.message:'网络中断，操作结果待确认。请重试上次操作，不会重复扣费。';$('bag-note').textContent=economyNote;toast(economyNote);
+ }finally{economyBusy=false;renderEconomy();}
+}
+async function requestItem(kind,item){
+ if(economyBusy||pendingEconomy()||!economyWallet)return;
+ const body={id:crypto.randomUUID?crypto.randomUUID():Date.now()+'-'+Math.random().toString(36).slice(2),item};
+ if(kind==='use'){
+  finishStroke(true);const g=game();if(g.paused||g.won||g.trial)return;
+  body.attemptId=g.attemptId;body.levelId=currentLevel().id;body.board=g.board.slice();
+  try{Q.effect(currentLevel(),body.board,item);}catch(e){$('bag-note').textContent=e.message;toast(e.message);return;}
+ }
+ await runEconomy({kind,body});
+}
+for(const id of ['shop-items','bag-items'])$(id).addEventListener('click',ev=>{const btn=ev.target.closest('button[data-item]');if(btn)requestItem(btn.dataset.action,btn.dataset.item);});
+for(const id of ['economy-retry','bag-retry'])$(id).addEventListener('click',()=>{const op=pendingEconomy();if(op)runEconomy(op);else loadEconomy();});
+$('bag-open').addEventListener('click',()=>{if(game().won)return;if(game().trial){toast('请先结束本轮假设，再使用道具。');return;}finishStroke(true);tutorial?.stop();clearHint();tick();$('bag-note').textContent=pendingEconomy()?'上次操作结果待确认，请重试。':'使用后归入借助线索榜；撤销只撤回棋盘，不退回已用道具。';$('bag-dialog').showModal();renderEconomy();loadEconomy();});
+$('bag-close').addEventListener('click',()=>{if(!economyBusy)$('bag-dialog').close();});
+$('bag-dialog').addEventListener('cancel',ev=>{if(economyBusy)ev.preventDefault();});
+$('bag-dialog').addEventListener('close',()=>{lastTick=performance.now();});
+$('bag-shop').addEventListener('click',()=>{if(!economyBusy){$('bag-dialog').close();go('shop');}});
+
 const RESULTS_KEY='cat-sudoku-results-v1',PENDING_KEY='cat-sudoku-pending-results-v1';
 let results=R.merge(store.get(RESULTS_KEY)||[]),pendingResults=store.get(PENDING_KEY)||[],resultSending=false,resultRetry=0,levelRankSequence=0;
 function resultOwner(){return account?.signedIn?String(account.player?.id??account.id??''):null;}
@@ -684,7 +780,8 @@ function finishResult(){
  const summary=R.summarize(run,results.filter(old=>(old.owner||'guest')===run.owner));$('win-time').textContent=preciseTime(run.elapsedMs);
  $('win-best').textContent=summary.first?'你的首个'+(summary.independent?'独立':'辅助')+'完成记录':summary.improvedMs>0?'刷新个人纪录 · 快了 '+(summary.improvedMs/1000).toFixed(1)+' 秒':'同模式个人最佳 '+preciseTime(summary.bestMs);
  $('win-badge').textContent=summary.title;
- if(!g.submitted){g.submitted=true;results=R.merge(results,[run]);store.set(RESULTS_KEY,results);if(resultOwner()){pendingResults.push({owner:resultOwner(),run:{...run,cats:Array.from({length:l.size},(_,r)=>g.board.slice(r*l.size,(r+1)*l.size).indexOf(E.CAT))}});store.set(PENDING_KEY,pendingResults);}}
+ $('win-reward').textContent=resultOwner()?'奖励结算中…联网后自动到账':'';
+ if(!g.submitted){g.submitted=true;results=R.merge(results,[run]);store.set(RESULTS_KEY,results);if(resultOwner()){pendingResults.push({owner:resultOwner(),run:{...run,cats:Array.from({length:l.size},(_,r)=>g.board.slice(r*l.size,(r+1)*l.size).indexOf(E.CAT))}});store.set(PENDING_KEY,pendingResults);}else showReward(guestReward(run));}
  $('level-rank-independent').setAttribute('aria-pressed',String(summary.independent));$('level-rank-assisted').setAttribute('aria-pressed',String(!summary.independent));
  flushResults().then(()=>loadLevelRank(summary.independent?'independent':'assisted'));
 }
@@ -692,7 +789,7 @@ async function flushResults(){
  if(resultSending||!resultOwner())return;resultSending=true;const owner=resultOwner();
  try{for(const item of [...pendingResults].filter(x=>x.owner===owner)){
    if(resultOwner()!==owner)break;
-   try{await apiFetch('/complete',{method:'POST',headers:{'Content-Type':'application/json'},keepalive:true,body:JSON.stringify(item.run)});pendingResults=pendingResults.filter(x=>x!==item);store.set(PENDING_KEY,pendingResults);}
+   try{const data=await apiFetch('/complete',{method:'POST',headers:{'Content-Type':'application/json'},keepalive:true,body:JSON.stringify(item.run)});if(data.wallet)acceptWallet(data.wallet,owner);if(data.reward&&owner===resultOwner()&&game().attemptId===item.run.id)showReward(data.reward);pendingResults=pendingResults.filter(x=>x!==item);store.set(PENDING_KEY,pendingResults);}
    catch(e){if(e.status===400){pendingResults=pendingResults.filter(x=>x!==item);store.set(PENDING_KEY,pendingResults);toast('这次成绩未通过规则校验，仅保留本机记录');continue;}throw e;}
  }}catch(_){clearTimeout(resultRetry);resultRetry=setTimeout(flushResults,10000);}finally{resultSending=false;}
 }
@@ -789,7 +886,7 @@ try{const ids=new Set();if(!Array.isArray(levels)||!levels.length)throw Error('�
 function currentLevel(){return levels[levelIndex];}
 function game(){return sessions.get(currentLevel().id);}
 function newGame(level){return{attemptId:crypto.randomUUID?crypto.randomUUID():Date.now()+'-'+Math.random().toString(36).slice(2),hints:0,conflicts:0,guides:0,submitted:false,board:J.startBoard(level),givens:J.forLevel(level).givens.slice(),history:[],elapsed:0,started:false,paused:false,won:false,trial:null,trialNotes:[]};}
-function modalOpen(){return $('settings-dialog').open||$('tutorial-dialog').open||$('picker-dialog').open||$('confirm-dialog').open;}
+function modalOpen(){return $('settings-dialog').open||$('tutorial-dialog').open||$('picker-dialog').open||$('confirm-dialog').open||$('bag-dialog').open;}
 function time(ms){const seconds=Math.floor(ms/1000);return String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0');}
 function tick(){const now=performance.now(),g=game();if(R.activeTime(g,!document.hidden,modalOpen(),document.body.dataset.view))g.elapsed+=now-lastTick;lastTick=now;if(g)$('timer').textContent=time(g.elapsed);}
 function record(kind='move'){tick();const g=game();g.history.push({runMeta:kind==='reset'?{attemptId:g.attemptId,hints:g.hints,conflicts:g.conflicts,guides:g.guides,submitted:g.submitted}:null,board:g.board.slice(),elapsed:g.elapsed,started:g.started,paused:g.paused,won:g.won,trial:T.clone(g.trial),trialNotes:T.copyNotes(g.trialNotes),kind});}
@@ -1040,7 +1137,7 @@ $('board').addEventListener('pointerup',ev=>{if(stroke&&ev.pointerId===stroke.id
 $('board').addEventListener('pointercancel',ev=>{if(stroke&&ev.pointerId===stroke.id)finishStroke(true);});
 $('board').addEventListener('lostpointercapture',()=>finishStroke(true));
 window.addEventListener('blur',()=>finishStroke(true));
-function undo(){finishStroke(true);lastTap=null;const g=game();if(g.won||!g.history.length)return;tick();const elapsed=g.elapsed,paused=g.paused,started=g.started,{kind,runMeta,...state}=g.history.pop();Object.assign(g,state);if(runMeta)Object.assign(g,runMeta);if(kind!=='reset'){g.elapsed=elapsed;g.paused=paused;g.started=started;}manualCheck=false;lastTick=performance.now();$('celebration').replaceChildren();render('已撤销上一步。');renderPath();sound('erase');haptic(9);if(!g.paused&&!g.won)cells[focused].focus({preventScroll:true});}
+function undo(){if(economyBusy)return;finishStroke(true);lastTap=null;const g=game();if(g.won||!g.history.length)return;tick();const elapsed=g.elapsed,paused=g.paused,started=g.started,{kind,runMeta,...state}=g.history.pop();Object.assign(g,state);if(runMeta)Object.assign(g,runMeta);if(kind!=='reset'){g.elapsed=elapsed;g.paused=paused;g.started=started;}manualCheck=false;lastTick=performance.now();$('celebration').replaceChildren();render('已撤销上一步。');renderPath();sound('erase');haptic(9);if(!g.paused&&!g.won)cells[focused].focus({preventScroll:true});}
 function reset(){finishStroke(true);const g=game();if(!g.started&&!g.board.some(Boolean))return;record('reset');const history=g.history;Object.assign(g,newGame(currentLevel()));g.history=history;g.started=document.body.dataset.view==='game';manualCheck=false;lastTick=performance.now();$('celebration').replaceChildren();closeDialog('settings-dialog');render('已重置，撤销可以恢复。');renderPath();sound('erase');}
 function pause(){finishStroke(true);const g=game();if(g.won)return;tick();g.paused=!g.paused;lastTick=performance.now();render();if(g.paused)$('resume').focus();else cells[focused].focus({preventScroll:true});}
 function onCellKey(ev,index){
@@ -1064,7 +1161,7 @@ document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',
 for(const dlg of document.querySelectorAll('dialog')){
  let press=null,seen=false;
  const outside=(x,y)=>{const r=dlg.getBoundingClientRect();return x<r.left||x>r.right||y<r.top||y>r.bottom;};
- const dismiss=()=>{unlockAudio();if(dlg.id)closeDialog(dlg.id);else dlg.close();};
+ const dismiss=()=>{if(dlg.id==='bag-dialog'&&economyBusy)return;unlockAudio();if(dlg.id)closeDialog(dlg.id);else dlg.close();};
  const clear=()=>{press=null;seen=false;};
  dlg.addEventListener('pointerdown',ev=>{seen=true;press=outside(ev.clientX,ev.clientY)?{x:ev.clientX,y:ev.clientY}:null;});
  dlg.addEventListener('pointercancel',clear);
@@ -1088,9 +1185,10 @@ document.addEventListener('visibilitychange',()=>{finishStroke(true);tick();last
 
 // ---- App shell: home trail / shop / rank / me, with the board living in its own full-screen view.
 // 「我的」的子页走 #/me/<panel>，底部标签始终停在「我的」——换子页不该被当成换标签。
-const VIEWS=['home','rank','me'];
+const VIEWS=['home','shop','rank','me'];
 let currentView='home';
 function go(view,push=true){
+  if(economyBusy)return;
   const [base,panel]=String(view||'').split('/');
   const next=base==='game'||VIEWS.includes(base)?base:'home';
   const sub=next==='me'&&ME_PANELS.includes(panel)?panel:'';
@@ -1103,6 +1201,7 @@ function go(view,push=true){
   for(const b of $('tabbar').querySelectorAll('.tab')){const on=b.dataset.tab===next;b.classList.toggle('is-on',on);b.setAttribute('aria-current',on?'page':'false');}
   if(next==='home'){renderPath();centerCat(false);}
   if(next==='rank')loadRank(rankRange);
+  if(next==='shop'){renderEconomy();loadEconomy();}
   if(next==='me'){renderMe();if(sub)window.scrollTo(0,0);}
   const hash='#/'+next+(sub?'/'+sub:'');
   if(push&&location.hash!==hash)history.pushState({view:next,panel:sub},'',hash);
@@ -1166,6 +1265,7 @@ if(loginResult!==null||wechatResult!==null){
 }
 // Cloud sync is a bonus, never a requirement: a broken bridge or a merge problem must not stop play.
 initAccount().then(()=>{
+  loadEconomy();
   // 登录设备数只取一次，免得每次 renderMe 都多打一个请求。
   if(account?.signedIn)apiFetch('/sessions').then(data=>{sessionCount=data.sessions.length;if(document.body.dataset.view==='me')renderMe();}).catch(()=>{});
   if(account?.signedIn){awaitResults();flushResults();}
