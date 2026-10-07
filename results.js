@@ -8,6 +8,8 @@ function summarize(run,previous=[]){
  const best=peers.length?Math.min(...peers.map(r=>r.elapsedMs)):null;
  return {independent:independent(run),bestMs:Math.min(run.elapsedMs,best??Infinity),improvedMs:best===null?null:Math.max(0,best-run.elapsedMs),first:best===null,title:independent(run)?(run.conflicts===0?'独立完成 · 零冲突':'独立完成'):'借助线索完成'};
 }
-function activeTime(g,visible,modal,view){return Boolean(g&&g.started&&!g.paused&&!g.won&&visible&&!modal&&view==='game');}
+// Entering a visible board starts the clock, even before the first board action.
+// `started` is interaction/history state and must never gate elapsed time.
+function activeTime(g,visible,modal,view){return Boolean(g&&!g.paused&&!g.won&&visible&&!modal&&view==='game');}
 const api={valid,independent,merge,summarize,activeTime};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.CatResults=api;
 })(typeof globalThis!=='undefined'?globalThis:this);
