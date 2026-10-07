@@ -28,7 +28,7 @@
 
 .board[data-hint-kind=check] .cell.hint-evidence:after{content:'•';font-size:26px;color:#fff;pointer-events:none}.board[data-hint-kind=contradiction] .cell.hint-evidence{outline-color:#b74255;box-shadow:inset 0 0 0 3px #b74255}
 
-/* Bottom control row: one row of like-styled icon buttons (撤销 / 假设 / 提示 / 技巧). Trial mode restyles the same row in place. */
+/* Fixed control row with directly accessible consumables. */
 .toolbar{position:relative;display:block;margin:14px 0 10px;padding:6px;background:#fff;border:1px solid var(--line);border-radius:18px;transition:background .16s,border-color .16s,box-shadow .16s}
 .tool-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
 .toolbar .tool-button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:100%;min-width:0;padding:6px 2px;border-radius:12px;background:transparent;font-size:12px;color:var(--muted)}
@@ -389,3 +389,8 @@ button.route-node:active:not(:disabled){transform:translate(-50%,-50%);filter:br
 
 .game-header{grid-template-columns:40px minmax(0,1fr) 40px 40px;gap:8px}.game-header .round-button{width:40px;height:40px}.game-header .heading p{font-size:10px}.cell.item-flash{outline:3px solid #ffdd86;outline-offset:-3px;filter:brightness(1.12)}
 @media(max-width:380px){.game-header{grid-template-columns:34px minmax(0,1fr) 34px 34px;gap:6px}.game-header .round-button{width:34px;height:34px;font-size:12px}.game-header .heading h1{font-size:22px}}
+
+/* Direct item shortcuts share the bottom row; they never shift when counts change. */
+.tool-row{grid-template-columns:repeat(5,minmax(0,1fr))}.toolbar .item-tool .tool-icon{position:relative;color:#b68b41}.toolbar #item-brush .tool-icon{color:#7d8fac}.item-count{position:absolute;right:-10px;top:-5px;display:grid;place-items:center;min-width:17px;height:17px;padding:0 3px;border-radius:9px;background:#b68b41;color:#fff;font-size:10px;line-height:1;font-weight:650;font-variant-numeric:tabular-nums;border:1px solid #fff}.toolbar #item-brush .item-count{background:#7d8fac}.toolbar .item-tool.is-empty .item-count{background:#a9b4ad}.toolbar .item-tool .btn-label{white-space:nowrap;font-size:11px}.toolbar .item-tool .tool-icon svg{display:block;width:100%;height:100%}
+.game-header{grid-template-columns:40px minmax(0,1fr) 40px}
+@media(max-width:380px){.game-header{grid-template-columns:34px minmax(0,1fr) 34px}.tool-row{gap:2px}.toolbar .item-tool .btn-label{font-size:10px}}

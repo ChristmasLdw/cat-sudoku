@@ -689,11 +689,10 @@ async function loadEconomy(){
 function pendingEconomy(){return store.get('cat-sudoku-economy-pending:'+economyOwner());}
 function renderEconomy(){
  const w=economyWalletOwner===economyOwner()?economyWallet:null,waiting=Boolean(pendingEconomy());
- $('shop-coins').textContent=w?w.coins:'—';$('bag-count').textContent=w?w.bell+w.brush:'·';
+ $('shop-coins').textContent=w?w.coins:'—';renderQuickItems();
  $('shop-account-note').textContent=economyNote||(economyOwner()==='guest'?'游客资产只保存在本机；登录后使用独立的账户钱包，不合并游客金币。':'猫爪币和道具已跟随账号保存。');
  $('economy-retry').hidden=!waiting&&!economyNote;$('economy-retry').disabled=economyBusy;
- $('bag-retry').hidden=!waiting;$('bag-retry').disabled=economyBusy;
- for(const [id,inGame] of [['shop-items',false],['bag-items',true]]){
+ for(const [id,inGame] of [['shop-items',false]]){
   const box=$(id);box.replaceChildren();
   for(const [item,info] of Object.entries(Q.ITEMS)){
    const card=el('article','supply '+item),icon=el('span','supply-icon');icon.setAttribute('aria-hidden','true');icon.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">'+itemArt[item]+'</svg>';
@@ -703,7 +702,25 @@ function renderEconomy(){
    foot.append(el('small',null,'已拥有 '+(w?w[item]:'—')),btn);card.append(icon,copy,foot);box.append(card);
   }
  }
- $('bag-close').disabled=economyBusy;$('bag-shop').disabled=economyBusy;$('bag-dialog').setAttribute('aria-busy',String(economyBusy));
+
+}
+function renderQuickItems(){
+ const w=economyWalletOwner===economyOwner()?economyWallet:null,g=game(),pending=pendingEconomy();
+ for(const item of ['bell','brush']){
+  const button=$('item-'+item),info=Q.ITEMS[item],retry=pending?.kind==='use'&&pending.body.item===item;
+  button.querySelector('.item-count').textContent=w?w[item]:'—';
+  button.querySelector('.btn-label').textContent=retry?'重试'+info.name:info.name;
+  button.disabled=economyBusy||!w||g?.paused||g?.won||Boolean(g?.trial);
+  button.classList.toggle('is-empty',Boolean(w&&!w[item]));
+  button.setAttribute('aria-label',retry?'重试'+info.name:info.name+'，剩余 '+(w?w[item]:'未知')+' 个');
+  button.title=info.description+(w&&!w[item]?' 已用完，点击去商店。':' 消耗 1 个。');
+ }
+ const blocked=economyBusy||Boolean(g?.paused)||Boolean(g?.won);
+ $('board').inert=blocked;
+ for(const id of ['undo','trial-open','hint-request','pause','settings-open','levels-open']){
+  const disabled=economyBusy||(id==='pause'?g?.won:['settings-open','levels-open'].includes(id)?false:blocked||(id==='undo'&&!g?.history.length));
+  $(id).disabled=Boolean(disabled);
+ }
 }
 function showReward(grant){
  const box=$('win-reward');box.replaceChildren();
@@ -727,7 +744,7 @@ function guestOperation(op){
 }
 async function runEconomy(op){
  if(economyBusy)return;const owner=economyOwner(),key='cat-sudoku-economy-pending:'+owner;
- economyBusy=true;economyNote='';store.set(key,op);renderEconomy();$('bag-note').textContent='正在准备道具…';
+ tick();economyBusy=true;economyNote='';store.set(key,op);renderEconomy();if(op.kind==='use')toast('道具准备中…');
  try{
   const data=owner==='guest'?guestOperation(op):await apiFetch('/economy/'+op.kind,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(op.body),signal:AbortSignal.timeout(15000)});
   store.set(key,null);if(owner!==economyOwner())return;acceptWallet(data.wallet,owner);
@@ -737,38 +754,35 @@ async function runEconomy(op){
    if(same){
     // Consumption is not part of board history: undo can revert marks, never mint items.
     record('item');g.hints++;for(const i of data.effect.targets)g.board[i]=data.effect.value;g.started=true;
-    $('bag-dialog').close();clearHint();render();for(const i of data.effect.targets){feedback(i,data.effect.value,true);const cell=cells[i];cell?.classList.add('item-flash');setTimeout(()=>cell?.classList.remove('item-flash'),2400);}
+    clearHint();render();for(const i of data.effect.targets){feedback(i,data.effect.value,true);const cell=cells[i];cell?.classList.add('item-flash');setTimeout(()=>cell?.classList.remove('item-flash'),2400);}
     if(!g.won)toast(op.body.item==='bell'?'寻猫铃找到了一只猫':'排除刷标好了 '+data.effect.targets.length+' 格');
    }else{
     const level=levels.find(l=>l.id===op.body.levelId),number=levels.findIndex(l=>l.id===op.body.levelId)+1;
     const positions=data.effect.targets.map(i=>(Math.floor(i/level.size)+1)+'行'+(i%level.size+1)+'列').join('、');
     const note='上次道具已生效（第 '+number+' 关）：'+positions+(data.effect.value===2?'是猫':'可标 ×')+'。当前棋盘已变化，本次未再扣道具。';
-    $('bag-note').textContent=note;economyNote=note;
+    economyNote=note;toast(note);
    }
   }
  }catch(error){
   // Keep the exact request ID after ambiguous network failures; retry retrieves the receipt.
   if(error.status&&error.status<500||owner==='guest')store.set(key,null);
-  economyNote=(error.status&&error.status<500||owner==='guest')?error.message:'网络中断，操作结果待确认。请重试上次操作，不会重复扣费。';$('bag-note').textContent=economyNote;toast(economyNote);
- }finally{economyBusy=false;renderEconomy();}
+  economyNote=(error.status&&error.status<500||owner==='guest')?error.message:'网络中断，操作结果待确认。请重试上次操作，不会重复扣费。';toast(economyNote);
+ }finally{economyBusy=false;lastTick=performance.now();renderEconomy();}
 }
 async function requestItem(kind,item){
- if(economyBusy||pendingEconomy()||!economyWallet)return;
+ if(economyBusy||!economyWallet)return;const pending=pendingEconomy();if(pending){if(kind==='use'&&pending.kind==='use'&&pending.body.item===item)return runEconomy(pending);toast('请到商店重试上次操作，避免重复扣费。');return;}
+ if(kind==='use'&&!economyWallet[item]){go('shop');toast(Q.ITEMS[item].name+'已用完，可以在这里兑换。');return;}
  const body={id:crypto.randomUUID?crypto.randomUUID():Date.now()+'-'+Math.random().toString(36).slice(2),item};
  if(kind==='use'){
-  finishStroke(true);const g=game();if(g.paused||g.won||g.trial)return;
+  finishStroke(true);const g=game();if(g.paused||g.won||g.trial)return;tutorial?.stop();clearHint();unlockAudio();
   body.attemptId=g.attemptId;body.levelId=currentLevel().id;body.board=g.board.slice();
-  try{Q.effect(currentLevel(),body.board,item);}catch(e){$('bag-note').textContent=e.message;toast(e.message);return;}
+  try{Q.effect(currentLevel(),body.board,item);}catch(e){toast(e.message);return;}
  }
  await runEconomy({kind,body});
 }
-for(const id of ['shop-items','bag-items'])$(id).addEventListener('click',ev=>{const btn=ev.target.closest('button[data-item]');if(btn)requestItem(btn.dataset.action,btn.dataset.item);});
-for(const id of ['economy-retry','bag-retry'])$(id).addEventListener('click',()=>{const op=pendingEconomy();if(op)runEconomy(op);else loadEconomy();});
-$('bag-open').addEventListener('click',()=>{if(game().won)return;if(game().trial){toast('请先结束本轮假设，再使用道具。');return;}finishStroke(true);tutorial?.stop();clearHint();tick();$('bag-note').textContent=pendingEconomy()?'上次操作结果待确认，请重试。':'使用后归入借助线索榜；撤销只撤回棋盘，不退回已用道具。';$('bag-dialog').showModal();renderEconomy();loadEconomy();});
-$('bag-close').addEventListener('click',()=>{if(!economyBusy)$('bag-dialog').close();});
-$('bag-dialog').addEventListener('cancel',ev=>{if(economyBusy)ev.preventDefault();});
-$('bag-dialog').addEventListener('close',()=>{lastTick=performance.now();});
-$('bag-shop').addEventListener('click',()=>{if(!economyBusy){$('bag-dialog').close();go('shop');}});
+$('shop-items').addEventListener('click',ev=>{const btn=ev.target.closest('button[data-item]');if(btn)requestItem(btn.dataset.action,btn.dataset.item);});
+$('economy-retry').addEventListener('click',()=>{const op=pendingEconomy();if(op)runEconomy(op);else loadEconomy();});
+for(const item of ['bell','brush'])$('item-'+item).addEventListener('click',()=>requestItem('use',item));
 
 const RESULTS_KEY='cat-sudoku-results-v1',PENDING_KEY='cat-sudoku-pending-results-v1';
 let results=R.merge(store.get(RESULTS_KEY)||[]),pendingResults=store.get(PENDING_KEY)||[],resultSending=false,resultRetry=0,levelRankSequence=0;
@@ -886,7 +900,7 @@ try{const ids=new Set();if(!Array.isArray(levels)||!levels.length)throw Error('�
 function currentLevel(){return levels[levelIndex];}
 function game(){return sessions.get(currentLevel().id);}
 function newGame(level){return{attemptId:crypto.randomUUID?crypto.randomUUID():Date.now()+'-'+Math.random().toString(36).slice(2),hints:0,conflicts:0,guides:0,submitted:false,board:J.startBoard(level),givens:J.forLevel(level).givens.slice(),history:[],elapsed:0,started:false,paused:false,won:false,trial:null,trialNotes:[]};}
-function modalOpen(){return $('settings-dialog').open||$('tutorial-dialog').open||$('picker-dialog').open||$('confirm-dialog').open||$('bag-dialog').open;}
+function modalOpen(){return $('settings-dialog').open||$('tutorial-dialog').open||$('picker-dialog').open||$('confirm-dialog').open||economyBusy;}
 function time(ms){const seconds=Math.floor(ms/1000);return String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0');}
 function tick(){const now=performance.now(),g=game();if(R.activeTime(g,!document.hidden,modalOpen(),document.body.dataset.view))g.elapsed+=now-lastTick;lastTick=now;if(g)$('timer').textContent=time(g.elapsed);}
 function record(kind='move'){tick();const g=game();g.history.push({runMeta:kind==='reset'?{attemptId:g.attemptId,hints:g.hints,conflicts:g.conflicts,guides:g.guides,submitted:g.submitted}:null,board:g.board.slice(),elapsed:g.elapsed,started:g.started,paused:g.paused,won:g.won,trial:T.clone(g.trial),trialNotes:T.copyNotes(g.trialNotes),kind});}
@@ -995,9 +1009,10 @@ function locationName(index){const n=currentLevel().size;return '第 '+(Math.flo
 function setLabel(id,text){$(id).querySelector('.btn-label').textContent=text;}
 function renderTrial(){
  const g=game(),trial=g.trial,root=trial?.root??null,issues=trial&&root!==null?T.contradictions(currentLevel(),g.board):[];
+ renderQuickItems();
  $('toolbar').classList.remove('trial-mode');
- for(const [id,label] of [['trial-open','假设'],['hint-request','提示'],['tutorial-open','技巧']])setLabel(id,label);
- $('trial-open').disabled=g.paused||g.won; $('hint-request').disabled=g.paused||g.won;
+ for(const [id,label] of [['trial-open','假设'],['hint-request','提示']])setLabel(id,label);
+ $('trial-open').disabled=economyBusy||g.paused||g.won; $('hint-request').disabled=economyBusy||g.paused||g.won;
  $('trial-tools').hidden=!trial||g.paused||g.won||Boolean(activeHint);
  $('trial-caption').textContent=root===null?'点一格，试着放猫':locationName(root)+(issues.length?' · 出现矛盾':' · 假设中');
  $('trial-return').textContent=root===null?'取消':'撤回';
@@ -1161,7 +1176,7 @@ document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',
 for(const dlg of document.querySelectorAll('dialog')){
  let press=null,seen=false;
  const outside=(x,y)=>{const r=dlg.getBoundingClientRect();return x<r.left||x>r.right||y<r.top||y>r.bottom;};
- const dismiss=()=>{if(dlg.id==='bag-dialog'&&economyBusy)return;unlockAudio();if(dlg.id)closeDialog(dlg.id);else dlg.close();};
+ const dismiss=()=>{unlockAudio();if(dlg.id)closeDialog(dlg.id);else dlg.close();};
  const clear=()=>{press=null;seen=false;};
  dlg.addEventListener('pointerdown',ev=>{seen=true;press=outside(ev.clientX,ev.clientY)?{x:ev.clientX,y:ev.clientY}:null;});
  dlg.addEventListener('pointercancel',clear);

@@ -314,7 +314,7 @@ function mount(options){
  const summaries=['单击空格标 ×，再点可清空。× 表示你认为这里没有猫。','双击同一格确认猫咪，单击一次先标 ×。','按住鼠标左键或手指滑动，连续标 ×；从 × 开始则擦除。','猫咪周围八格都不能有另一只猫，斜角也算。','同一种颜色只剩一个合法位置，这里就是猫。','一行只剩一个合法位置，这里就是猫。','一列只剩一个合法位置，这里就是猫。','一种颜色的候选都在一行，这一行的其他颜色可排除。','一种颜色的候选都在一列，这一列的其他颜色可排除。','一行或一列只剩一种颜色，该颜色在其他行列的格子可排除。','两种颜色的候选占据同两行或两列，那两行或两列的其他颜色可排除。','两行或两列只剩同两种颜色，这两种颜色在其他行列的格子可排除。','假设一个格子有猫，若会让其他颜色无处放猫，这个格子就可以排除。','点底栏「假设」保存原盘，撤回假设恢复整轮；「试」留下起点，「排」表示你手动排除的起点。','卡住时看推理提示，先读原因，再决定自己操作或快速应用。'];
  lessons.forEach((lesson,i)=>{const details=document.createElement('details'),summary=document.createElement('summary'),text=document.createElement('p'),button=document.createElement('button');summary.textContent=lesson.title;text.textContent=summaries[i];button.textContent='在当前棋盘看看';button.onclick=()=>{library.close();if(options.onLessonRequest&&options.onLessonRequest(i))return;openLesson(i);};details.append(summary,text,button);$('skill-list').append(details);});
  function openLibrary(){options.beforeOpen();library.showModal();sync();}
- $('tutorial-open').onclick=openLibrary;$('tutorial-close').onclick=()=>library.close();library.addEventListener('close',()=>{options.afterClose();sync();});
+ $('tutorial-close').onclick=()=>library.close();library.addEventListener('close',()=>{options.afterClose();sync();});
  window.addEventListener('resize',()=>{position();layoutScope();});window.addEventListener('scroll',()=>{position();layoutScope();},{passive:true});document.addEventListener('visibilitychange',()=>sync());
  return{syncSkills,open:openLibrary,openUnit,openLesson,stop,sync,noteSkillUsed,learnedCount:()=>learned.length,visible:()=>!card.hidden,teaching:()=>Boolean(pending),armWhenItMatters};
 }
