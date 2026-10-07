@@ -394,3 +394,5 @@ button.route-node:active:not(:disabled){transform:translate(-50%,-50%);filter:br
 .tool-row{grid-template-columns:repeat(5,minmax(0,1fr))}.toolbar .item-tool .tool-icon{position:relative;color:#b68b41}.toolbar #item-brush .tool-icon{color:#7d8fac}.item-count{position:absolute;right:-10px;top:-5px;display:grid;place-items:center;min-width:17px;height:17px;padding:0 3px;border-radius:9px;background:#b68b41;color:#fff;font-size:10px;line-height:1;font-weight:650;font-variant-numeric:tabular-nums;border:1px solid #fff}.toolbar #item-brush .item-count{background:#7d8fac}.toolbar .item-tool.is-empty .item-count{background:#a9b4ad}.toolbar .item-tool .btn-label{white-space:nowrap;font-size:11px}.toolbar .item-tool .tool-icon svg{display:block;width:100%;height:100%}
 .game-header{grid-template-columns:40px minmax(0,1fr) 40px}
 @media(max-width:380px){.game-header{grid-template-columns:34px minmax(0,1fr) 34px}.tool-row{gap:2px}.toolbar .item-tool .btn-label{font-size:10px}}
+
+.rank-period{margin:0 2px 4px;color:var(--muted);font-size:12px;text-align:right;font-variant-numeric:tabular-nums}

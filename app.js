@@ -646,22 +646,21 @@ function renderRank(){
     const p=document.createElement('p');p.className='rank-me';
     p.textContent=mine
       ?('你的排名 '+mine.rank+' · 通关 '+mine.completed+' 关')
-      :(account&&account.signedIn?(rankRange==='all'?'还没有已同步的首次通关记录。':'本期暂无已同步的新增通关；重玩已过关卡会更新用时榜。'):'登录后完成新关卡，成绩同步成功即可上榜。');
+      :(account&&account.signedIn?'暂未上榜':'登录后参与排名');
     return p;
   };
-  if(rankBusy&&!rankRows){say('正在读取榜单…');return;}
-  if(rankRows?.error){say('榜单暂时读不到，稍后再试。');return;}
+  if(rankBusy&&!rankRows){say('加载中…');return;}
+  if(rankRows?.error){say('暂时无法加载，请稍后再试');return;}
   const entries=rankRows?.entries||[];
-  if(rankRows?.period){const d=v=>new Date(v).toLocaleDateString('zh-CN',{timeZone:'Asia/Shanghai'});say((rankRange==='day'?'今日':'本周')+'新增通关 · '+d(rankRows.period.start)+(rankRange==='week'?' — '+d(new Date(new Date(rankRows.period.end).getTime()-1)):'')+' · 北京时间');}
-  if(rankRows?.includesLegacy)say('已补入旧版每日快照中的通关增量，按快照记载日期计入；历史用时保持不变。');
-  if(!entries.length){say('本期暂无已同步的新增通关记录。');box.append(standing());return;}
+  if(rankRows?.period){const d=v=>new Date(v).toLocaleDateString('zh-CN',{timeZone:'Asia/Shanghai',month:'numeric',day:'numeric'});const label=d(rankRows.period.start)+(rankRange==='week'?' — '+d(new Date(new Date(rankRows.period.end).getTime()-1)):'');box.append(el('p','rank-period',label));}
+  if(!entries.length){say('暂无排名');return;}
   const list=document.createElement('ol');list.className='rank-list';
   for(const entry of entries){
     const li=document.createElement('li');li.className='rank-item'+(entry.isMe?' is-me':'');
     const no=document.createElement('b');no.className='rank-no';no.textContent=entry.rank;
     const who=document.createElement('span');who.className='rank-who';
     who.append(rankAvatar(entry),el('span',null,entry.name));
-    const score=document.createElement('span');score.className='rank-score';score.textContent='通关 '+entry.completed+' 关';
+    const score=document.createElement('span');score.className='rank-score';score.textContent=entry.completed+' 关';
     li.append(no,who,score);list.append(li);
   }
   box.append(list,standing());
@@ -808,13 +807,13 @@ async function flushResults(){
  }}catch(_){clearTimeout(resultRetry);resultRetry=setTimeout(flushResults,10000);}finally{resultSending=false;}
 }
 async function loadLevelRank(mode='independent'){
- const sequence=++levelRankSequence,id=currentLevel().id,box=$('level-rank-list');box.textContent='正在读取真实成绩…';
+ const sequence=++levelRankSequence,id=currentLevel().id,box=$('level-rank-list');box.textContent='加载中…';
  for(const name of ['independent','assisted'])$('level-rank-'+name).setAttribute('aria-pressed',String(name===mode));
  try{const data=await apiFetch('/level-leaderboard?level='+encodeURIComponent(id)+'&mode='+mode);if(sequence!==levelRankSequence||id!==currentLevel().id)return;
   box.replaceChildren();for(const entry of data.entries){const row=el('li',entry.isMe?'is-me':'');row.append(el('b',null,String(entry.rank)),el('span',null,entry.name+(entry.isMe?'（你）':'')),el('strong',null,preciseTime(entry.elapsedMs)),el('small',null,entry.conflicts+' 次冲突'));box.append(row);}
-  if(!data.entries.length)box.append(el('li','rank-empty','还没有成绩，等你来挑战。'));
-  $('level-rank-me').textContent=data.me?'你的最佳排名：第 '+data.me.rank+' / '+data.total+' 名'+(data.gapMs!==null?' · 距前一名 '+(data.gapMs/1000).toFixed(1)+' 秒':' · 并列成绩同名次'):resultOwner()?(pendingResults.some(x=>x.owner===resultOwner()&&x.run.levelId===id)?'成绩等待联网同步':'你还没有这个模式的成绩'):'登录后，新的通关成绩才能参与排名';
- }catch(_){if(sequence===levelRankSequence){box.textContent='暂时无法读取榜单';$('level-rank-me').textContent='本机成绩已保留，可以稍后重试。';}}
+  if(!data.entries.length)box.append(el('li','rank-empty','暂无成绩'));
+  $('level-rank-me').textContent=data.me?'你排第 '+data.me.rank+' 名'+(data.gapMs!==null?' · 距前一名 '+(data.gapMs/1000).toFixed(1)+' 秒':''):resultOwner()?(pendingResults.some(x=>x.owner===resultOwner()&&x.run.levelId===id)?'成绩待同步':'暂无该模式成绩'):'登录后参与排名';
+ }catch(_){if(sequence===levelRankSequence){box.textContent='暂时无法读取榜单';$('level-rank-me').textContent='';}}
 }
 $('level-rank-independent').addEventListener('click',()=>loadLevelRank('independent'));
 $('level-rank-assisted').addEventListener('click',()=>loadLevelRank('assisted'));
