@@ -3,8 +3,8 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="theme-color" content="#f4f8f6">
 <title>猫猫数独 · 逻辑小游戏</title><meta name="description" content="每行、每列、每种颜色各一只猫。按住拖动标记，慢慢找到猫咪的家。">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23252141'/%3E%3Cpath d='M8 23V8l8 5 8-5v15z' fill='%23dcd3ff'/%3E%3Ccircle cx='12' cy='19' r='1.5'/%3E%3Ccircle cx='20' cy='19' r='1.5'/%3E%3C/svg%3E">
-<link rel="stylesheet" href="styles.css?v=rankrecover20261007c">
-<script src="engine.js?v=rankrecover20261007c" defer></script><script src="trial.js?v=rankrecover20261007c" defer></script><script src="levels.js?v=rankrecover20261007c" defer></script><script src="hints.js?v=rankrecover20261007c" defer></script><script src="tutorial.js?v=rankrecover20261007c" defer></script><script src="journey.js?v=rankrecover20261007c" defer></script><script src="results.js?v=rankrecover20261007c" defer></script><script src="app.js?v=rankrecover20261007c" defer></script>
+<link rel="stylesheet" href="styles.css?v=continuous20261007d">
+<script src="engine.js?v=continuous20261007d" defer></script><script src="trial.js?v=continuous20261007d" defer></script><script src="levels.js?v=continuous20261007d" defer></script><script src="hints.js?v=continuous20261007d" defer></script><script src="tutorial.js?v=continuous20261007d" defer></script><script src="journey.js?v=continuous20261007d" defer></script><script src="results.js?v=continuous20261007d" defer></script><script src="app.js?v=continuous20261007d" defer></script>
 </head><body>
 <svg class="svg-defs" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><defs><symbol id="cat-icon" viewBox="0 0 40 40"><path d="M8 17V6l10 7h4l10-7v11c3 3 4 6 3 10-1 7-7 10-15 10S6 34 5 27c-1-4 0-7 3-10Z" fill="currentColor"/><path d="M15 23h.1M25 23h.1" stroke="#fff" stroke-width="3.5" stroke-linecap="round"/><path d="m18 28 2 2 2-2" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol></defs></svg>
 <main class="game" id="view-game" aria-labelledby="level-title">
@@ -29,8 +29,9 @@
   <div class="home-brand"><b>猫猫数独</b><span id="home-progress">0 / 196 关</span></div>
   <div class="home-badges"><span id="home-skill">技巧 0 / 16</span><span id="home-done">已通关 0</span><button id="picker-open" class="picker-open">选关</button></div>
  </header>
- <div class="route-continue"><span>每一步，都更接近推理高手</span><button id="continue-game"><b id="continue-label">继续探索</b><span aria-hidden="true">→</span></button><div class="route-progress"><i id="route-progress"></i></div></div>
- <div class="path-scroll" id="path-scroll"><div class="path" id="path"></div></div>
+ <div class="route-progress" aria-hidden="true"><i id="route-progress"></i></div>
+ <div class="path-scroll" id="path-scroll" role="region" aria-label="连续关卡路线，向上探索后续关卡"><div class="path" id="path"></div></div>
+ <div class="route-continue"><button id="route-locate" aria-label="定位当前进度" title="定位当前进度"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="6.5"/><circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/></svg></button><button id="continue-game"><b id="continue-label">接着玩</b><span aria-hidden="true">→</span></button></div>
 </section>
 
 <section class="view" id="view-shop" hidden>

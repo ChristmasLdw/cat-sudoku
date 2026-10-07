@@ -793,26 +793,36 @@ function modalOpen(){return $('settings-dialog').open||$('tutorial-dialog').open
 function time(ms){const seconds=Math.floor(ms/1000);return String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0');}
 function tick(){const now=performance.now(),g=game();if(R.activeTime(g,!document.hidden,modalOpen(),document.body.dataset.view))g.elapsed+=now-lastTick;lastTick=now;if(g)$('timer').textContent=time(g.elapsed);}
 function record(kind='move'){tick();const g=game();g.history.push({runMeta:kind==='reset'?{attemptId:g.attemptId,hints:g.hints,conflicts:g.conflicts,guides:g.guides,submitted:g.submitted}:null,board:g.board.slice(),elapsed:g.elapsed,started:g.started,paused:g.paused,won:g.won,trial:T.clone(g.trial),trialNotes:T.copyNotes(g.trialNotes),kind});}
+// One uninterrupted path. Level IDs/order are unchanged; scenery never gates play.
 const nodeEls=new Map();let routeBuilt=false;
-function paintTrail(){}
-function measurePad(){}
+const ROUTE_STEP=100,ROUTE_PAD=100;
+function routePoint(i){return{x:180+96*Math.sin(i*Math.PI/3),y:ROUTE_PAD+(levels.length-1-i)*ROUTE_STEP};}
+function routeContinueIndex(){if(!journey.completed.includes(currentLevel().id))return levelIndex;const next=levels.findIndex((l,i)=>i>levelIndex&&!journey.completed.includes(l.id));return next<0?levelIndex:next;}
+const routeScenery=[
+ '<svg viewBox="0 0 90 80"><ellipse cx="43" cy="68" rx="32" ry="7" fill="#96bdaa" opacity=".18"/><path d="M42 62V31" stroke="#9dbb96" stroke-width="5"/><path d="M42 49C9 45 14 19 17 16c21 0 27 13 25 33Z" fill="#b8d7ad"/><path d="M43 40C45 16 67 12 74 17c-2 22-13 31-31 23Z" fill="#86baa2"/><path d="M29 53h30l-5 18H34Z" fill="#e6ccb0"/><path d="M28 54h32" stroke="#d7b897" stroke-width="5" stroke-linecap="round"/></svg>',
+ '<svg viewBox="0 0 100 70"><ellipse cx="48" cy="49" rx="42" ry="17" fill="#c1deda"/><ellipse cx="48" cy="46" rx="36" ry="12" fill="#d9eddf"/><path d="M24 43h22m8 8h19" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".6"/><path d="M69 40c-8-3-9-11-3-15 3-2 7 1 8 6 8-4 13 2 10 7-3 4-8 4-15 2Z" fill="#9abfa8"/></svg>',
+ '<svg viewBox="0 0 100 70"><path d="M19 48c-17-1-12-21 1-20C23 7 49 8 55 23c21-7 32 9 24 21 17 3 13 15-3 14H28c-12 0-16-5-9-10Z" fill="#fff" opacity=".85"/><path d="M24 61h44" stroke="#bcd2cf" stroke-width="4" stroke-linecap="round" opacity=".25"/></svg>',
+ '<svg viewBox="0 0 80 80"><path d="M40 70V38m0 23L25 51m15 0 14-10" fill="none" stroke="#b1c6a3" stroke-width="3" stroke-linecap="round"/><g fill="#f1d995"><ellipse cx="40" cy="20" rx="7" ry="12"/><ellipse cx="40" cy="44" rx="7" ry="12"/><ellipse cx="28" cy="32" rx="12" ry="7"/><ellipse cx="52" cy="32" rx="12" ry="7"/></g><circle cx="40" cy="32" r="8" fill="#d9b767"/><path d="M37 61C20 62 15 52 17 47c13 0 20 6 20 14Z" fill="#b5d0aa"/></svg>'
+];
 function renderPath(){
  const path=$('path');if(!path)return;
  if(!routeBuilt){
-  path.replaceChildren();const names=['窗边初遇','花园漫步','屋顶探险','星光推理'];
-  for(let start=0;start<levels.length;start+=10){
-   const end=Math.min(start+10,levels.length),chapter=document.createElement('details');chapter.className='route-chapter';chapter.dataset.start=start;chapter.style.setProperty('--chapter-tone',['#e4f1e9','#fff1d8','#eae5f6','#e1edf6'][Math.floor(start/10)%4]);
-   const title=document.createElement('summary');title.innerHTML='<span class="chapter-art" aria-hidden="true">'+['❀','☀','☾','✦'][Math.floor(start/10)%4]+'</span><span><small>第 '+(Math.floor(start/10)+1)+' 站 · '+(start+1)+'—'+end+' 关</small><b>'+names[Math.floor(start/10)%4]+'</b></span><em></em>';chapter.append(title);
-   const track=document.createElement('div');track.className='chapter-track';
-   for(let i=start;i<end;i++){const button=document.createElement('button');button.type='button';button.dataset.index=i;button.addEventListener('click',()=>openLevel(i));nodeEls.set(i,button);track.append(button);}
-   chapter.append(track);path.append(chapter);
-  }routeBuilt=true;
+  path.replaceChildren();const height=ROUTE_PAD*2+(levels.length-1)*ROUTE_STEP;path.style.height=height+'px';
+  const ns='http://www.w3.org/2000/svg',road=document.createElementNS(ns,'svg');road.setAttribute('class','journey-road');road.setAttribute('viewBox','0 0 360 '+height);road.setAttribute('preserveAspectRatio','none');road.setAttribute('aria-hidden','true');
+  let line='';for(let i=0;i<levels.length;i++){const q=routePoint(i);if(!i)line='M '+q.x+' '+q.y;else{const prev=routePoint(i-1);line+=' C '+prev.x+' '+(prev.y-50)+' '+q.x+' '+(q.y+50)+' '+q.x+' '+q.y;}}
+  for(const name of ['road-shadow','road-edge','road-fill','road-dashes']){const track=document.createElementNS(ns,'path');track.setAttribute('d',line);track.setAttribute('class',name);track.setAttribute('vector-effect','non-scaling-stroke');road.append(track);}path.append(road);
+  for(let i=0;i<levels.length;i++){
+   const point=routePoint(i),button=document.createElement('button');button.type='button';button.dataset.index=i;button.style.left=(point.x/360*100)+'%';button.style.top=point.y+'px';button.addEventListener('click',()=>{unlockAudio();sound('erase');openLevel(i);});nodeEls.set(i,button);path.append(button);
+   if(i%2===0){const scenery=document.createElement('span');scenery.className='route-scenery';scenery.setAttribute('aria-hidden','true');scenery.style.top=(point.y-48)+'px';scenery.style.left=(point.x>=180?'6%':'77%');scenery.innerHTML=routeScenery[Math.floor(i/2)%routeScenery.length];path.append(scenery);}
+  }
+  const start=document.createElement('span');start.className='route-start';start.textContent='小小一步，慢慢变厉害';start.style.top=(routePoint(0).y+56)+'px';path.append(start);
+  const ahead=document.createElement('span');ahead.className='route-ahead';ahead.textContent='✦  一路向前  ✦';path.append(ahead);routeBuilt=true;
  }
- for(const [i,button] of nodeEls){const done=journey.completed.includes(levels[i].id),here=i===levelIndex;button.className='route-node'+(done?' is-done':'')+(here?' is-here':'');button.innerHTML='<span>'+String(i+1)+'</span>'+(done?'<i>✓</i>':here?'<i class="route-cat">'+catSVG+'</i>':'');button.setAttribute('aria-label','第 '+(i+1)+' 关'+(done?'，已完成':'')+(here?'，当前关卡':''));if(here)button.setAttribute('aria-current','step');else button.removeAttribute('aria-current');}
- for(const chapter of path.children){const start=Number(chapter.dataset.start),end=Math.min(start+10,levels.length),count=levels.slice(start,end).filter(l=>journey.completed.includes(l.id)).length;chapter.querySelector('em').textContent=count+'/'+(end-start);if(levelIndex>=start&&levelIndex<end)chapter.open=true;}
+ const target=routeContinueIndex();
+ for(const [i,button] of nodeEls){const done=journey.completed.includes(levels[i].id),here=i===target,state=(done?'done':'todo')+(here?'-here':'');if(button.dataset.routeState===state)continue;button.dataset.routeState=state;button.className='route-node'+(done?' is-done':'')+(here?' is-here':'');button.innerHTML='<span class="route-number">'+(i+1)+'</span>'+(done?'<i class="route-tick" aria-hidden="true">✓</i>':'')+(here?'<i class="route-cat" aria-hidden="true">'+catSVG+'</i><span class="route-here" aria-hidden="true">'+(done?'再挑战':'从这里继续')+'</span>':'');button.setAttribute('aria-label','第 '+(i+1)+' 关'+(done?'，已完成':'，待挑战')+(here?'，当前进度':''));if(here)button.setAttribute('aria-current','step');else button.removeAttribute('aria-current');}
  const done=journey.completed.length,tips=tutorial?.learnedCount()??0;
- $('home-progress').textContent=done+' / '+levels.length+' 关';$('home-skill').textContent='练习过 '+tips+' 个技巧';$('home-done').textContent='已通关 '+done;$('me-skill-count').textContent=tips+' / 16';
- $('continue-label').textContent=(journey.completed.includes(currentLevel().id)?'再挑战':'继续探索')+' · 第 '+(levelIndex+1)+' 关';$('route-progress').style.width=(done/levels.length*100)+'%';renderMe();
+ $('home-progress').textContent='已完成 '+done+' / '+levels.length+' 关';$('home-skill').textContent='练习过 '+tips+' 个技巧';$('home-done').textContent='已通关 '+done;$('me-skill-count').textContent=tips+' / 16';
+ $('continue-label').textContent=(journey.completed.includes(levels[target].id)?'再挑战':'接着玩')+' · 第 '+(target+1)+' 关';$('route-progress').style.width=(done/levels.length*100)+'%';renderMe();
 }
 // Every level as a compact grid, so picking a specific number takes one tap instead of a long scroll.
 function renderPicker(){
@@ -832,9 +842,9 @@ function renderPicker(){
   });
   $('picker-total').textContent=journey.completed.length+' / '+levels.length+' 关完成';
 }
-function moveCat(){}
-function centerCat(smooth=true){const chapter=nodeEls.get(levelIndex)?.closest('details');if(chapter){chapter.open=true;const box=$('path-scroll');box.scrollTo({top:Math.max(0,chapter.offsetTop-$('path').offsetTop-12),behavior:smooth&&!reduceMotion.matches?'smooth':'instant'});}}
-$('continue-game').addEventListener('click',()=>openLevel(levelIndex));
+function centerCat(smooth=true){const box=$('path-scroll');if(!box)return;const y=routePoint(routeContinueIndex()).y;box.scrollTo({top:Math.max(0,Math.min(box.scrollHeight-box.clientHeight,y-box.clientHeight*.68)),behavior:smooth&&prefs.motion&&!reduceMotion.matches?'smooth':'instant'});}
+$('continue-game').addEventListener('click',()=>openLevel(routeContinueIndex()));
+$('route-locate').addEventListener('click',()=>centerCat());
 function selectLevel(index){
   if(!Number.isInteger(index)||index<0||index>=levels.length)throw Error('关卡编号无效');finishStroke(true);tutorial?.stop();lastTap=null;clearHint();tick();levelIndex=index;manualCheck=false;focused=0;
   const l=currentLevel();colors=l.regionColors||defaultColors;if(!sessions.has(l.id))sessions.set(l.id,newGame(l));
