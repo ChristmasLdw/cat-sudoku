@@ -1,0 +1,16 @@
+{
+  "name": "cat-sudoku-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "猫猫数独的账号与排行榜服务：以澜图回声（Lantecho）为统一身份提供方，自带进度存储与总/周/日榜。",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "pg": "^8.13.1"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
