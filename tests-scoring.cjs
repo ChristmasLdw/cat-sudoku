@@ -1,0 +1,20 @@
+'use strict';
+const assert=require('node:assert/strict'),{period,validateAttempt}=require('./api/scoring.cjs'),R=require('./results.js'),E=require('./engine.js'),J=require('./journey.js'),levels=J.arrange(require('./levels.js')),catalog=require('./api/catalog.json');
+assert.equal(levels.length,196);assert.deepEqual(catalog,levels.map(l=>({id:l.id,size:l.size,regions:l.regions,givens:J.forLevel(l).givens})));
+assert.deepEqual(period('day',new Date('2026-10-07T15:59:59Z')),{start:'2026-10-06T16:00:00.000Z',end:'2026-10-07T16:00:00.000Z',timezone:'Asia/Shanghai'});
+assert.equal(period('day',new Date('2026-10-07T16:00:00Z')).start,'2026-10-07T16:00:00.000Z');
+assert.equal(period('week',new Date('2026-10-11T15:59:59Z')).start,'2026-10-04T16:00:00.000Z');
+assert.equal(period('week',new Date('2026-10-11T16:00:00Z')).start,'2026-10-11T16:00:00.000Z');
+for(const l of levels){const body={id:'test-run-123456789',levelId:l.id,cats:E.solve(l,1)[0],elapsedMs:15000,hints:0,conflicts:0,guides:0};assert.equal(validateAttempt(body,catalog).levelId,l.id);assert.throws(()=>validateAttempt({...body,cats:Array(l.size).fill(0)},catalog));}
+assert.throws(()=>validateAttempt({levelId:'invented'},catalog));
+const base={id:'result-one',levelId:levels[0].id,elapsedMs:60000,hints:0,conflicts:0,guides:0};
+assert.equal(R.summarize({...base,id:'second',elapsedMs:45000},[base]).improvedMs,15000);
+assert.equal(R.summarize({...base,id:'second',hints:1},[base]).first,true);
+assert.equal(R.independent({...base,guides:1}),false);
+assert.equal(R.merge([base],[base]).length,1);
+for(const view of ['home','rank','me'])assert.equal(R.activeTime({started:true},true,false,view),false);
+assert.equal(R.activeTime({started:true},true,false,'game'),true);
+for(const g of [{started:false},{started:true,paused:true},{started:true,won:true}])assert.equal(R.activeTime(g,true,false,'game'),false);
+const progress=J.validProgress({completed:[levels[0].id,'old-level'],skills:{seen:[1,1,99],practiced:[2]}},levels);
+assert.deepEqual(J.validProgress(progress,levels).stale,['old-level']);assert.deepEqual(progress.skills,{seen:[1],practiced:[2]});
+console.log('PASS 196 server catalog/proof checks, Shanghai calendar boundaries, independent/assisted bests, deduplication, pause views and stale/skill persistence');

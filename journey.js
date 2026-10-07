@@ -9,7 +9,7 @@ const config={
     {
       "name": "初次见面",
       "tag": "跟着提示走完第一关",
-      "cap": 1,
+      "cap": 2,
       "lessons": [
         15
       ],
@@ -1300,7 +1300,8 @@ function validProgress(raw,levels){
   return{
     completed:[...new Set(done.filter(id=>ids.has(id)))],
     learned:[...new Set((Array.isArray(raw?.learned)?raw.learned:[]).filter(id=>UNIT_IDS.has(id)))],
-    stale:[...new Set(done.filter(id=>!ids.has(id)))],
+    stale:[...new Set([...done,...(Array.isArray(raw?.stale)?raw.stale:[])].filter(id=>(typeof id==='string'||typeof id==='number')&&!ids.has(id)))],
+    skills:{seen:[...new Set((Array.isArray(raw?.skills?.seen)?raw.skills.seen:[]).filter(i=>Number.isInteger(i)&&i>=0&&i<16))],practiced:[...new Set((Array.isArray(raw?.skills?.practiced)?raw.skills.practiced:[]).filter(i=>Number.isInteger(i)&&i>=0&&i<16))]},
     current:ids.has(raw?.current)?raw.current:levels[0].id
   };
 }

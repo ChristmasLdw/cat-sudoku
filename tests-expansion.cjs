@@ -1,6 +1,6 @@
 const assert=require('node:assert/strict'),crypto=require('node:crypto'),L=require('./levels.js'),J=require('./journey.js'),{fingerprint}=require('./generate-levels.cjs');
-const arranged=J.arrange(L),extra=arranged.slice(62);
-assert.equal(crypto.createHash('sha256').update(JSON.stringify(arranged.slice(0,62))).digest('hex'),'3ac759d131450c771e8e96c51019546fa6f362ae6c40dfecfea1fda2d25de981','The original 62 boards and playing order must stay unchanged');
+const arranged=J.arrange(L),extra=arranged.slice(96);
+assert.equal(crypto.createHash('sha256').update(JSON.stringify(arranged)).digest('hex'),'c888bc6b19b8b2d06c446274c2696d81f8d6360fe28df6ee994207e2a0190aa2','The recovered 196 production boards and playing order must stay unchanged');
 assert.equal(extra.length,100);
 assert.equal(new Set(L.map(fingerprint)).size,L.length,'No duplicate region layout, including rotations, reflections or color relabeling');
 for(const [i,l] of extra.entries()){
@@ -10,6 +10,6 @@ for(const [i,l] of extra.entries()){
  assert(J.startBoard(l).every(v=>v===0));
  assert.deepEqual(J.unitFor(l).lessons,[]);
 }
-const saved={completed:arranged.slice(0,62).map(l=>l.id),learned:[0,9,10],current:arranged[61].id};
-assert.deepEqual(J.validProgress(saved,arranged),saved,'Existing progress survives expansion');
-console.log('PASS 100 appended empty boards, original 62 boards/order/progress unchanged, correct groups, symmetry-aware deduplication.');
+const saved={completed:arranged.slice(0,62).map(l=>l.id),learned:[0,1,10],current:arranged[61].id};
+assert.deepEqual(J.validProgress(saved,arranged),{...saved,stale:[],skills:{seen:[],practiced:[]}},'Existing progress survives expansion');
+console.log('PASS 100 appended empty boards, recovered 196 boards/order/progress unchanged, correct groups, symmetry-aware deduplication.');

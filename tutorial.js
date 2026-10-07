@@ -42,10 +42,8 @@ function plan(level,board,lesson,trial=null,notes=[]){
   if(settled)return{title:'排除成功',text:'那一格已经标成 ×，这轮假设也结束了。这就是「假设 + 排除起点」的完整用法：不确定就先试，试错了就一键排除，永远不会把棋盘玩坏。',targets:[],evidence:[settled.index],action:'学会了就关闭这张卡片',done:()=>true};
   if(trial&&trial.root!==null){
    const root=trial.root,broken=!H.feasible(level,board);
-   // While a hypothesis runs, 提示 turns into 排除起点 (app.js renderTrial), so that is the button the
-   // player has to press here.
-   if(broken)return{title:'看，这就是猜错的样子',text:'棋盘已经走不通了 —— 这只猫放错了。点底栏的「排除起点」：棋盘立刻恢复原样，这一格直接标成 ×，以后不用再考虑它。',control:'hint-request',targets:[],evidence:[root],trialBroken:true};
-   return{title:'这步还推得下去',text:'暂时没有矛盾。沿着这条假设继续推理；如果越走越窄，点底栏「撤回假设」回到起点，从另一个候选重来。',control:'trial-return',targets:[],evidence:[root]};
+   if(broken)return{title:'看，这就是猜错的样子',text:'棋盘已经走不通了。点假设浮层的「撤回并排除」：恢复原盘，并把起点标成 ×。',control:'trial-exclude',targets:[],evidence:[root],trialBroken:true};
+   return{title:'这步还推得下去',text:'暂时没有矛盾，可以继续推理；点假设浮层的「撤回」就能恢复原盘。',control:'trial-return',targets:[],evidence:[root]};
   }
   if(trial)return null;
   const next=H.find(level,board);
@@ -147,16 +145,17 @@ const SKILL_OF={
 function mount(options){
   const $=id=>document.getElementById(id),card=$('coach'),grid=$('board'),KEY='cat-garden-coach-v2';
   // The trial actions now live on the bottom row: 假设 itself switches to 取消假设 / 撤回假设.
-  const controlNode=id=>$(id==='trial-start'||id==='trial-return'?'trial-open':id);
-  let learned=[],pending=null,active=null,lastKey='',lastBoard=[],layoutFrame=0,armed=null;
+  const controlNode=id=>$(id==='trial-start'?'trial-open':id);
+  let learned=options.getSkills?.().practiced.slice()||[],seen=options.getSkills?.().seen.slice()||[],pending=null,active=null,lastKey='',lastBoard=[],layoutFrame=0,armed=null;
   const finishedLevels=new Set(),dismissed=new Set();
-  try{const value=JSON.parse(localStorage.getItem(KEY)||'[]');if(Array.isArray(value))learned=[...new Set(value.filter(i=>Number.isInteger(i)&&i>=0&&i<lessons.length))];}catch(_){}
-  const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(learned));}catch(_){}};
+  try{const value=JSON.parse(localStorage.getItem(KEY)||'[]');if(Array.isArray(value))seen=[...new Set([...seen,...value.filter(i=>Number.isInteger(i)&&i>=0&&i<lessons.length)])];}catch(_){}
+  const save=()=>{seen=[...new Set([...seen,...learned])];options.onSkillsChange?.({seen:seen.slice(),practiced:learned.slice()});};
+  const syncSkills=skills=>{seen=[...new Set([...seen,...skills.seen])];learned=[...new Set([...learned,...skills.practiced])];};
   // Called by the app whenever it shows a hint, so the counter reflects real play.
   function noteSkillUsed(kind){
     const skills=SKILL_OF[kind];if(!skills)return;
     let changed=false;
-    for(const i of skills)if(!learned.includes(i)){learned.push(i);changed=true;}
+    for(const i of skills)if(!seen.includes(i)){seen.push(i);changed=true;}
     // 操作类技巧（单击/双击/拖动）在第一关的引导里就会点亮，这里只补齐纯推理技巧。
     if(changed){save();options.onShow();}
     return changed;
@@ -310,14 +309,14 @@ function mount(options){
  $('coach-close').onclick=()=>{dismissed.add(options.context().level.id);stop();};
  // `keepOpen` steps do their own bookkeeping: the 假设 walk-through opens the mode on this click and then
  // re-plans itself from the live board, so ending the lesson here would cut it off mid-sentence.
- for(const id of ['trial-open','trial-return','hint-request']){const el=controlNode(id);el.addEventListener('click',()=>{if(active?.control===id&&!active.keepOpen)complete();},true);}
+ for(const id of ['trial-open','trial-return','trial-exclude','hint-request']){const el=controlNode(id);el.addEventListener('click',()=>{if(active?.control===id&&!active.keepOpen)complete();},true);}
  const library=$('tutorial-dialog');
  const summaries=['单击空格标 ×，再点可清空。× 表示你认为这里没有猫。','双击同一格确认猫咪，单击一次先标 ×。','按住鼠标左键或手指滑动，连续标 ×；从 × 开始则擦除。','猫咪周围八格都不能有另一只猫，斜角也算。','同一种颜色只剩一个合法位置，这里就是猫。','一行只剩一个合法位置，这里就是猫。','一列只剩一个合法位置，这里就是猫。','一种颜色的候选都在一行，这一行的其他颜色可排除。','一种颜色的候选都在一列，这一列的其他颜色可排除。','一行或一列只剩一种颜色，该颜色在其他行列的格子可排除。','两种颜色的候选占据同两行或两列，那两行或两列的其他颜色可排除。','两行或两列只剩同两种颜色，这两种颜色在其他行列的格子可排除。','假设一个格子有猫，若会让其他颜色无处放猫，这个格子就可以排除。','点底栏「假设」保存原盘，撤回假设恢复整轮；「试」留下起点，「排」表示你手动排除的起点。','卡住时看推理提示，先读原因，再决定自己操作或快速应用。'];
  lessons.forEach((lesson,i)=>{const details=document.createElement('details'),summary=document.createElement('summary'),text=document.createElement('p'),button=document.createElement('button');summary.textContent=lesson.title;text.textContent=summaries[i];button.textContent='在当前棋盘看看';button.onclick=()=>{library.close();if(options.onLessonRequest&&options.onLessonRequest(i))return;openLesson(i);};details.append(summary,text,button);$('skill-list').append(details);});
  function openLibrary(){options.beforeOpen();library.showModal();sync();}
  $('tutorial-open').onclick=openLibrary;$('tutorial-close').onclick=()=>library.close();library.addEventListener('close',()=>{options.afterClose();sync();});
  window.addEventListener('resize',()=>{position();layoutScope();});window.addEventListener('scroll',()=>{position();layoutScope();},{passive:true});document.addEventListener('visibilitychange',()=>sync());
- return{open:openLibrary,openUnit,openLesson,stop,sync,noteSkillUsed,learnedCount:()=>learned.length,visible:()=>!card.hidden,teaching:()=>Boolean(pending),armWhenItMatters};
+ return{syncSkills,open:openLibrary,openUnit,openLesson,stop,sync,noteSkillUsed,learnedCount:()=>learned.length,visible:()=>!card.hidden,teaching:()=>Boolean(pending),armWhenItMatters};
 }
 const api={level,lessons,plan,satisfied,mount};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.CatTutorial=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

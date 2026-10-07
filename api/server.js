@@ -7,6 +7,9 @@
 const http = require('node:http');
 const crypto = require('node:crypto');
 const { Pool } = require('pg');
+const {validateAttempt,period}=require('./scoring.cjs');
+const catalog=require('./catalog.json');
+const catalogIds=new Set(catalog.map(l=>l.id));
 const sms = require('./providers/sms');
 const wechat = require('./providers/wechat');
 
@@ -209,6 +212,25 @@ async function initSchema() {
       updated_at      timestamptz not null default now()
     );
     alter table progress add column if not exists prefs jsonb not null default '{}'::jsonb;
+    alter table progress add column if not exists skills jsonb not null default '{"seen":[],"practiced":[]}'::jsonb;
+    create table if not exists scoring_meta (key text primary key, created_at timestamptz not null default now());
+    insert into scoring_meta(key) values ('first-clear-v2') on conflict do nothing;
+    create table if not exists completions (
+      player_id bigint not null references players(id) on delete cascade,
+      level_id text not null, completed_at timestamptz,
+      primary key(player_id,level_id)
+    );
+    create index if not exists completions_time_idx on completions(completed_at);
+    create table if not exists attempts (
+      player_id bigint not null references players(id) on delete cascade,
+      id text not null, level_id text not null, elapsed_ms integer not null,
+      hints integer not null, conflicts integer not null, guides integer not null,
+      finished_at timestamptz not null default now(), primary key(player_id,id)
+    );
+    -- Historical totals are retained, but no invented timestamps are assigned to them.
+    insert into completions(player_id,level_id)
+      select p.player_id, x.id from progress p cross join lateral jsonb_array_elements_text(p.completed) x(id)
+      on conflict do nothing;
     create table if not exists snapshots (
       player_id        bigint  not null references players(id) on delete cascade,
       day              date    not null,
@@ -339,7 +361,8 @@ function sanitizeProgress(input, reachedInput) {
   const reached = provided != null && Number.isFinite(rawReached)
     ? Math.max(0, Math.min(MAX_REACHED, Math.trunc(rawReached)))
     : 0;
-  return { completed, learned, current, reached };
+  const clean=a=>Array.isArray(a)?[...new Set(a.filter(n=>Number.isInteger(n)&&n>=0&&n<16))]:[];
+  return { completed, learned, current, reached, skills:{seen:clean(input.skills?.seen),practiced:clean(input.skills?.practiced)} };
 }
 
 // Preferences are a fixed set of switches, so anything else in the payload is dropped rather than
@@ -368,32 +391,61 @@ async function savePrefs(playerId, prefs) {
   );
 }
 
-async function saveProgress(playerId, data) {
-  await pool.query(
-    `insert into progress (player_id, completed, learned, current_level, reached, updated_at)
-     values ($1, $2::jsonb, $3::jsonb, $4, $5, now())
-     on conflict (player_id) do update
-        set completed = excluded.completed,
-            learned = excluded.learned,
-            current_level = excluded.current_level,
-            reached = greatest(progress.reached, excluded.reached),
-            updated_at = now()`,
-    [playerId, JSON.stringify(data.completed), JSON.stringify(data.learned), data.current, data.reached]
-  );
-  await pool.query(
-    `insert into snapshots (player_id, day, reached, completed_count, updated_at)
-     values ($1, (now() at time zone $4)::date, $2, $3, now())
-     on conflict (player_id, day) do update
-        set reached = greatest(snapshots.reached, excluded.reached),
-            completed_count = greatest(snapshots.completed_count, excluded.completed_count),
-            updated_at = now()`,
-    [playerId, data.reached, data.completed.length, TZ]
-  );
+async function saveProgress(playerId,data){
+  // Completion lists are server-owned. Only a validated /complete request adds a new one.
+  await pool.query(`insert into progress(player_id,learned,current_level,skills)
+    values($1,$2::jsonb,$3,$4::jsonb) on conflict(player_id) do update set
+    learned=(select coalesce(jsonb_agg(distinct v),'[]'::jsonb) from jsonb_array_elements(progress.learned || excluded.learned) v),
+    current_level=coalesce(excluded.current_level,progress.current_level),
+    skills=jsonb_build_object(
+      'seen',(select coalesce(jsonb_agg(distinct v),'[]'::jsonb) from jsonb_array_elements(coalesce(progress.skills->'seen','[]'::jsonb) || (excluded.skills->'seen')) v),
+      'practiced',(select coalesce(jsonb_agg(distinct v),'[]'::jsonb) from jsonb_array_elements(coalesce(progress.skills->'practiced','[]'::jsonb) || (excluded.skills->'practiced')) v)),
+    updated_at=now()`,[playerId,JSON.stringify(data.learned),catalogIds.has(data.current)?data.current:null,JSON.stringify(data.skills)]);
+}
+async function recordAttempt(playerId,body){
+ const run=validateAttempt(body,catalog),db=await pool.connect();
+ try{
+  await db.query('begin');
+  await db.query('insert into progress(player_id) values($1) on conflict do nothing',[playerId]);
+  // Serialize this player's completions; simultaneous devices cannot replace one another.
+  await db.query('select player_id from progress where player_id=$1 for update',[playerId]);
+  const inserted=await db.query(`insert into attempts(player_id,id,level_id,elapsed_ms,hints,conflicts,guides)
+    values($1,$2,$3,$4,$5,$6,$7) on conflict do nothing returning id`,[playerId,run.id,run.levelId,run.elapsedMs,run.hints,run.conflicts,run.guides]);
+  let firstClear=false;
+  if(inserted.rowCount){
+   const first=await db.query('insert into completions(player_id,level_id,completed_at) values($1,$2,now()) on conflict do nothing returning level_id',[playerId,run.levelId]);
+   firstClear=Boolean(first.rowCount);
+   await db.query(`update progress set completed=(select coalesce(jsonb_agg(distinct v),'[]'::jsonb) from jsonb_array_elements(completed || $2::jsonb) v), reached=greatest(reached,$3),updated_at=now() where player_id=$1`,[playerId,JSON.stringify([run.levelId]),catalog.findIndex(l=>l.id===run.levelId)+1]);
+  }
+  await db.query('commit');return {ok:true,firstClear};
+ }catch(e){await db.query('rollback');throw e;}finally{db.release();}
+}
+async function loadResults(playerId){
+ const {rows}=await pool.query('select distinct on (level_id,(hints=0 and guides=0)) id,level_id,elapsed_ms,hints,conflicts,guides,finished_at from attempts where player_id=$1 order by level_id,(hints=0 and guides=0),elapsed_ms,conflicts,finished_at',[playerId]);
+ return rows.map(r=>({id:r.id,levelId:r.level_id,elapsedMs:r.elapsed_ms,hints:r.hints,conflicts:r.conflicts,guides:r.guides,finishedAt:r.finished_at.toISOString()}));
+}
+
+// One personal best per player, with assisted and independent runs kept separate.
+async function levelLeaderboard(levelId,mode,playerId){
+ if(!catalogIds.has(levelId))throw Object.assign(new Error('关卡不存在'),{status:404});
+ const independent=mode!=='assisted';
+ const {rows}=await pool.query(`with best as (
+   select distinct on (player_id) player_id,elapsed_ms,conflicts,finished_at from attempts
+   where level_id=$1 and ((hints=0 and guides=0)=$2)
+   order by player_id,elapsed_ms,conflicts,finished_at
+ ), ranked as (
+   select b.*,rank() over(order by elapsed_ms)::int as rank,p.display_name,p.avatar_key,p.avatar_url
+   from best b join players p on p.id=b.player_id
+ ) select * from ranked order by rank,conflicts,finished_at,player_id`,[levelId,independent]);
+ const entry=r=>({rank:r.rank,name:r.display_name,avatarKey:r.avatar_key,avatar:r.avatar_url,elapsedMs:r.elapsed_ms,conflicts:r.conflicts,isMe:String(r.player_id)===String(playerId)});
+ const mine=rows.find(r=>String(r.player_id)===String(playerId));
+ const ahead=mine?rows.filter(r=>r.elapsed_ms<mine.elapsed_ms).at(-1):null;
+ return {levelId,mode:independent?'independent':'assisted',total:rows.length,entries:rows.slice(0,50).map(entry),me:mine?entry(mine):null,gapMs:ahead?mine.elapsed_ms-ahead.elapsed_ms:null};
 }
 
 async function loadProgress(playerId) {
   const { rows } = await pool.query(
-    'select completed, learned, current_level, reached, updated_at from progress where player_id = $1',
+    'select completed, learned, current_level, reached, skills, updated_at from progress where player_id = $1',
     [playerId]
   );
   if (!rows[0]) return { completed: [], learned: [], current: null, reached: 0, updatedAt: null };
@@ -401,6 +453,7 @@ async function loadProgress(playerId) {
   return {
     completed: row.completed ?? [],
     learned: row.learned ?? [],
+    skills: row.skills ?? {seen:[],practiced:[]},
     current: row.current_level ?? null,
     reached: row.reached ?? 0,
     updatedAt: row.updated_at,
@@ -409,114 +462,22 @@ async function loadProgress(playerId) {
 
 // ---------------------------------------------------------------- 排行榜
 
-// 日榜看今天；周榜看最近 7 天里各自的最好成绩；总榜看账号的历史最高。
-// 三个榜都取「最好的一天」，所以玩家不会因为跨天而看到自己的成绩被清零。
-//
-// 名次看的是**通关了几关**（`completed_count`），不是路线位置 `reached`。位置会随关卡表重排而整体
-// 错动，玩家自己数的是"我过了多少关"，所以 `reached` 只做并列时的次序（同样通关数、路线走得更远的靠前）。
-const LEADERBOARD_SQL = {
-  day: `
-    select p.id, p.display_name, p.avatar_url, p.avatar_key, s.reached, s.completed_count, s.updated_at
-      from snapshots s join players p on p.id = s.player_id
-     where s.day = (now() at time zone $2)::date
-     order by s.completed_count desc, s.reached desc, s.updated_at asc
-     limit $1`,
-  week: `
-    select p.id, p.display_name, p.avatar_url, p.avatar_key,
-           max(s.reached) as reached, max(s.completed_count) as completed_count, max(s.updated_at) as updated_at
-      from snapshots s join players p on p.id = s.player_id
-     where s.day >= ((now() at time zone $2)::date - 6)
-     group by p.id, p.display_name, p.avatar_url, p.avatar_key
-     order by completed_count desc, reached desc, updated_at asc
-     limit $1`,
-  all: `
-    select p.id, p.display_name, p.avatar_url, p.avatar_key,
-           pr.reached, coalesce(jsonb_array_length(pr.completed), 0) as completed_count, pr.updated_at
-      from progress pr join players p on p.id = pr.player_id
-     order by completed_count desc, pr.reached desc, pr.updated_at asc
-     limit $1`,
-};
-
-// A player who has not played in this window is not on the board at all, so the rank is null rather
-// than a flattering "1st". The tuple is ordered the same way as the board above: cleared count first.
-const RANK_SQL = {
-  day: `
-    select case when not exists (
-             select 1 from snapshots where player_id = $1 and day = (now() at time zone $2)::date
-           ) then null else (
-             select count(*)::int + 1 from snapshots other
-              where other.day = (now() at time zone $2)::date
-                and (other.completed_count, other.reached) > (
-                  select best.completed_count, best.reached from snapshots best
-                   where best.player_id = $1 and best.day = (now() at time zone $2)::date
-                )
-           ) end as rank`,
-  week: `
-    select case when not exists (
-             select 1 from snapshots where player_id = $1 and day >= ((now() at time zone $2)::date - 6)
-           ) then null else (
-             select count(*)::int + 1 from (
-               select player_id, max(reached) as reached, max(completed_count) as completed_count
-                 from snapshots where day >= ((now() at time zone $2)::date - 6) group by player_id
-             ) other
-              where (other.completed_count, other.reached) > (
-                select max(completed_count), max(reached) from snapshots
-                 where player_id = $1 and day >= ((now() at time zone $2)::date - 6)
-              )
-           ) end as rank`,
-  all: `
-    select case when not exists (select 1 from progress where player_id = $1) then null else (
-             select count(*)::int + 1 from progress other
-              where (coalesce(jsonb_array_length(other.completed), 0), other.reached) > (
-                select coalesce(jsonb_array_length(pr.completed), 0), pr.reached from progress pr where pr.player_id = $1
-              )
-           ) end as rank`,
-};
-
-// `all` reads the live progress table, so it takes one parameter; day and week also need the
-// timezone. Passing a parameter the statement never references makes Postgres reject the call.
-const LEADERBOARD_PARAMS = { day: [LEADERBOARD_LIMIT, TZ], week: [LEADERBOARD_LIMIT, TZ], all: [LEADERBOARD_LIMIT] };
-const rankParams = (range, playerId) => (range === 'all' ? [playerId] : [playerId, TZ]);
-
-async function leaderboard(range, playerId) {
-  const { rows } = await pool.query(LEADERBOARD_SQL[range], LEADERBOARD_PARAMS[range]);
-  const entries = rows.map((row, index) => ({
-    rank: index + 1,
-    name: row.display_name,
-    avatar: row.avatar_url || null,
-    avatarKey: row.avatar_key || null,
-    reached: row.reached ?? 0,
-    completed: row.completed_count ?? 0,
-    updatedAt: row.updated_at,
-    isMe: playerId ? Number(row.id) === Number(playerId) : false,
-  }));
-  let me = entries.find((entry) => entry.isMe) ?? null;
-  if (!me && playerId) {
-    const mine = await pool.query(RANK_SQL[range], rankParams(range, playerId));
-    const mineRank = mine.rows[0]?.rank ?? null;
-    if (mineRank !== null && mineRank !== undefined) {
-      const own = await pool.query(
-        `select p.display_name, p.avatar_url, p.avatar_key, pr.reached,
-                coalesce(jsonb_array_length(pr.completed), 0) as completed_count, pr.updated_at
-           from progress pr join players p on p.id = pr.player_id where pr.player_id = $1`,
-        [playerId]
-      );
-      if (own.rows[0]) {
-        const row = own.rows[0];
-        me = {
-          rank: mineRank,
-          name: row.display_name,
-          avatar: row.avatar_url || null,
-          avatarKey: row.avatar_key || null,
-          reached: row.reached ?? 0,
-          completed: row.completed_count ?? 0,
-          updatedAt: row.updated_at,
-          isMe: true,
-        };
-      }
-    }
-  }
-  return { range, entries, me };
+// Natural calendar periods. First clears only; repeats and settings writes never score.
+async function leaderboard(range,playerId){
+ const bounds=range==='all'?null:period(range);
+ const args=bounds?[bounds.start,bounds.end]:[];
+ const where=bounds?'where c.completed_at >= $1::timestamptz and c.completed_at < $2::timestamptz':'';
+ const {rows}=await pool.query(`with scores as (
+   select c.player_id,count(*)::int as completed,max(c.completed_at) as achieved_at
+   from completions c ${where} group by c.player_id
+ ), ranked as (
+   select s.*,rank() over(order by completed desc)::int as rank,p.display_name,p.avatar_url,p.avatar_key
+   from scores s join players p on p.id=s.player_id
+ ) select * from ranked order by rank,achieved_at asc nulls last,player_id`,args);
+ const entry=r=>({rank:r.rank,name:r.display_name,avatar:r.avatar_url||null,avatarKey:r.avatar_key||null,completed:r.completed,isMe:playerId?String(r.player_id)===String(playerId):false});
+ const meta=await pool.query("select created_at from scoring_meta where key='first-clear-v2'");
+ return {range,entries:rows.slice(0,LEADERBOARD_LIMIT).map(entry),me:rows.find(r=>String(r.player_id)===String(playerId))?entry(rows.find(r=>String(r.player_id)===String(playerId))):null,
+   period:bounds,trackingSince:meta.rows[0]?.created_at,metric:range==='all'?'累计首次通关':'期间首次通关'};
 }
 
 // ---------------------------------------------------------------- 账号中心
@@ -971,12 +932,12 @@ async function handlePutState(req, res) {
   const clean = sanitizeProgress(body.progress || {}, body.reached);
   await saveProgress(player.id, clean);
   await savePrefs(player.id, sanitizePrefs(body.prefs));
-  sendJson(res, 200, { ok: true, reached: clean.reached });
+  sendJson(res, 200, { ok: true });
 }
 
 async function handleLeaderboard(req, res, url) {
   const requested = url.searchParams.get('range') || 'all';
-  const range = Object.prototype.hasOwnProperty.call(LEADERBOARD_SQL, requested) ? requested : 'all';
+  const range = ['all','week','day'].includes(requested) ? requested : 'all';
   const player = await loadPlayer(req);
   sendJson(res, 200, await leaderboard(range, player?.id ?? null));
 }
@@ -1007,6 +968,14 @@ async function route(req, res) {
   if (method === 'PATCH' && path === '/me/profile') return handlePatchProfile(req, res);
   if (method === 'GET' && path === '/state') return handleGetState(req, res);
   if (method === 'PUT' && path === '/state') return handlePutState(req, res);
+  if(method==='GET' && path==='/level-leaderboard'){
+    const player=await loadPlayer(req);
+    return sendJson(res,200,await levelLeaderboard(url.searchParams.get('level'),url.searchParams.get('mode'),player?.id));
+  }
+  if ((method === 'POST' && path === '/complete') || (method === 'GET' && path === '/results')) {
+    const player=await loadPlayer(req);if(!player){sendJson(res,401,{error:'unauthenticated'});return;}
+    sendJson(res,200,method==='POST'?await recordAttempt(player.id,await readJson(req,res)):{results:await loadResults(player.id)});return;
+  }
   if (method === 'GET' && path === '/leaderboard') return handleLeaderboard(req, res, url);
   if (method === 'POST' && path === '/auth/phone/send') return handlePhoneSend(req, res);
   if (method === 'POST' && path === '/auth/phone/verify') return handlePhoneVerify(req, res);
@@ -1052,7 +1021,8 @@ for (const signal of ['SIGINT', 'SIGTERM']) {
   });
 }
 
-main().catch((error) => {
+module.exports={initSchema,pool,server,saveProgress,loadProgress,recordAttempt,leaderboard,levelLeaderboard,loadResults};
+if(require.main===module)main().catch((error) => {
   console.error('[cat-sudoku] startup failed', error);
   process.exit(1);
 });

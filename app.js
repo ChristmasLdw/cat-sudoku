@@ -1,7 +1,7 @@
 /* Cat Sudoku: pointer painting, keyboard play, local synthesized feedback. */
 (function(){
 'use strict';
-const E=window.CatPuzzle,T=window.CatTrial,J=window.CatJourney,levels=J.arrange(window.CAT_LEVELS),$=id=>document.getElementById(id);
+const E=window.CatPuzzle,T=window.CatTrial,J=window.CatJourney,R=window.CatResults,levels=J.arrange(window.CAT_LEVELS),$=id=>document.getElementById(id);
 const defaultColors=['#bca9e2','#f2c66d','#8fcbbb','#eca0ae','#90bde1','#d4cf8b','#c8ae95','#b8d585','#a8b0d9'];let colors=defaultColors;
 const catSVG='<svg class="cat" aria-hidden="true"><use href="#cat-icon"/></svg>';
 // A solid x, not a stroked one: thin strokes go muddy against the darker region colours. Drawn as one
@@ -22,7 +22,7 @@ function avatarSVG(key){
   const bg=a?a.bg:'#eef4f0',ink=a?a.ink:'#327867';
   return '<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="20" fill="'+bg+'"/><use href="#cat-icon" x="6.5" y="6.5" width="27" height="27" fill="'+ink+'"/></svg>';
 }
-const APP_VERSION='2026.10.4';
+const APP_VERSION='2026.10.7';
 const sessions=new Map(),reduceMotion=matchMedia('(prefers-reduced-motion: reduce)');
 // Progress store. Inside a Lantecho echo the page runs in an iframe with sandbox="allow-scripts" and
 // deliberately no allow-same-origin, so localStorage throws there and the platform bridge
@@ -35,7 +35,7 @@ const JOURNEY_KEY='cat-garden-journey-v1',PREFS_KEY='cat-garden-preferences-v2';
 // the game having to become a Lantecho echo. Not signed in? Nothing here runs and localStorage
 // carries the game exactly as before.
 const API_BASE=(location.pathname.indexOf('/cat-sudoku')===0?'/cat-sudoku':'')+'/api';
-let account=null,apiCache=null,apiSaveTimer=0,apiSaving=false,apiNote='';
+let account=null,apiCache=null,apiSaveTimer=0,apiSaving=false,apiNote='',apiRevision=0,apiSavedRevision=0,apiRetry=1000;
 async function apiFetch(path,options){
   const response=await fetch(API_BASE+path,{credentials:'same-origin',cache:'no-store',...options});
   let body=null;
@@ -67,23 +67,23 @@ const apiStore={
     if(!apiCache)apiCache={};
     if(key===JOURNEY_KEY)apiCache.progress=value;
     if(key===PREFS_KEY)apiCache.prefs=value;
+    apiRevision++;
+    if(account?.signedIn)store.set('cat-sudoku-state-outbox:'+account.player.id,{progress:apiCache.progress,prefs:apiCache.prefs});
     clearTimeout(apiSaveTimer);
     apiSaveTimer=setTimeout(pushAccountState,1200);
   }
 };
 async function pushAccountState(){
-  if(!account?.signedIn||apiSaving)return;
-  apiSaving=true;
+  if(!account?.signedIn||apiSaving||apiSavedRevision===apiRevision)return;
+  apiSaving=true;const revision=apiRevision,owner=account.player?.id;
   try{
-    await apiFetch('/state',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({progress:apiCache?.progress||null,prefs:apiCache?.prefs||null,reached:reachedIndex(journey)})});
-    apiNote='已保存到账号';
-  }catch(_){
-    apiNote='这次没存上，下次操作会再试';
-  }finally{
-    apiSaving=false;
-    if(document.body.dataset.view==='me')renderMe();
-  }
+    await apiFetch('/state',{method:'PUT',headers:{'Content-Type':'application/json'},keepalive:true,body:JSON.stringify({progress:apiCache?.progress||null,prefs:apiCache?.prefs||null})});
+    if(owner===account?.player?.id){apiSavedRevision=revision;apiNote='已保存到账号';apiRetry=1000;if(apiRevision===revision)store.set('cat-sudoku-state-outbox:'+owner,null);}
+  }catch(_){apiNote='暂未同步，联网后会自动重试';apiRetry=Math.min(30000,apiRetry*2);}
+  finally{apiSaving=false;if(account?.signedIn&&apiSavedRevision!==apiRevision){clearTimeout(apiSaveTimer);apiSaveTimer=setTimeout(pushAccountState,apiRetry);}if(document.body.dataset.view==='me')renderMe();}
 }
+window.addEventListener('online',()=>{pushAccountState();flushResults();});
+window.addEventListener('pagehide',()=>{pushAccountState();});
 function bridge(){
   if(account&&account.signedIn)return apiStore;
   const b=window.Lantecho&&window.Lantecho.storage;
@@ -110,7 +110,7 @@ function mergeProgress(local,cloud){
   // The account's position wins - that is the cross-device record. Only when the cloud holds no
   // usable position yet (the very first sync) does this device's level stand.
   const current=ids.has(cloud?.current)?cloud.current:local.current;
-  const merged=J.validProgress({completed:[...new Set([...l.completed,...c.completed])],learned:[...new Set([...l.learned,...c.learned])],current},levels);
+  const merged=J.validProgress({completed:[...new Set([...l.completed,...c.completed])],learned:[...new Set([...l.learned,...c.learned])],skills:{seen:[...l.skills.seen,...c.skills.seen],practiced:[...l.skills.practiced,...c.skills.practiced]},current},levels);
   merged.stale=[...new Set([...l.stale,...c.stale])].filter(id=>!ids.has(id));
   return merged;
 }
@@ -127,7 +127,7 @@ async function syncProgress(){
     if(cloudPrefs&&typeof cloudPrefs==='object'){let changed=false;for(const key of Object.keys(prefs))if(typeof cloudPrefs[key]==='boolean'&&prefs[key]!==cloudPrefs[key]){prefs[key]=cloudPrefs[key];changed=true;}if(changed)applyPrefs();}
     cloud=await b.get(JOURNEY_KEY);
   }catch(_){return;} // read failed: keep this session local rather than overwrite the account record
-  journey=mergeProgress(journey,cloud);
+  journey=mergeProgress(journey,cloud);tutorial?.syncSkills(journey.skills);
   cloudArmed=true;
   saveJourney();
   const index=levels.findIndex(l=>l.id===journey.current);
@@ -158,6 +158,7 @@ async function initAccount(){
   try{account=await apiFetch('/me');}catch(_){account={signedIn:false};}
   // /me already carries the record, so the first reconcile needs no second round trip.
   apiCache=account.signedIn?{progress:account.progress||null,prefs:account.prefs||null}:null;
+  if(account.signedIn){const outbox=store.get('cat-sudoku-state-outbox:'+account.player.id);if(outbox){apiCache.progress=mergeProgress(outbox.progress||journey,apiCache.progress);apiCache.prefs=outbox.prefs||apiCache.prefs;}}
   syncAccountUi();
   // 资料/绑定状态跟着账号走，账号一变就把当前子页重画一遍。
   renderedPanel=null;
@@ -241,11 +242,11 @@ function renderMe(){
     btn.addEventListener('click',()=>{unlockAudio();sound('cat');signIn();});
     who.append(name,note);
     card.append(who,btn);
-    $('me-storage').textContent='现在进度只存在这台设备的浏览器里（'+levels.length+' 关的通关记录与技巧掌握情况），换设备或清除浏览器数据会丢。';
+    $('me-storage').textContent='现在进度只存在这台设备的浏览器里（'+levels.length+' 关的通关记录与技巧练习记录），换设备或清除浏览器数据会丢。';
   }
   box.append(card);
 
-  $('me-summary').textContent='已通关 '+doneAll+' / '+levels.length+' 关，掌握 '+tips+' / 16 个技巧';
+  $('me-summary').textContent='已通关 '+doneAll+' / '+levels.length+' 关，练习过 '+tips+' / 16 个技巧';
   $('me-skill-count').textContent=tips+' / 16';
   $('me-version').textContent='v'+APP_VERSION;
   $('me-data-note').textContent=doneAll+' / '+levels.length+' 关';
@@ -564,7 +565,7 @@ function panelData(parent){
   const facts=el('div','fact-list');
   facts.append(
     fact('本机通关',done+' / '+levels.length+' 关'),
-    fact('掌握技巧',tips+' / 16 个'),
+    fact('练习过的技巧',tips+' / 16 个'),
     fact('当前关卡','第 '+(levelIndex+1)+' 关'),
     fact('存档位置',account?.signedIn?'账号 + 本机':'仅本机浏览器')
   );
@@ -572,18 +573,18 @@ function panelData(parent){
   const signedIn=Boolean(account?.signedIn);
   parent.append(el('p','page-note',signedIn
     ?'「清除本机进度」只清掉这台浏览器缓存的那一份。账号里的成绩不受影响，刷新后会重新同步回来。'
-    :'这台浏览器保存的通关记录和技巧掌握情况会被清空，无法恢复。'));
+    :'这台浏览器保存的通关记录和技巧练习记录会被清空，无法恢复。'));
 
   const clear=el('button','me-danger','清除本机进度');
   clear.addEventListener('click',async()=>{
     const yes=await confirmAction({
       title:'清除本机进度',
-      text:signedIn?'这台浏览器缓存的进度会被清空，账号里的成绩不受影响。':'通关记录和技巧掌握情况会被清空，无法恢复。',
+      text:signedIn?'这台浏览器缓存的进度会被清空，账号里的成绩不受影响。':'通关记录和技巧练习记录会被清空，无法恢复。',
       ok:'清除',danger:true,
     });
     if(!yes)return;
     // 清完直接刷新，让启动流程重新从云端对账 —— 就地清空再写回会把空进度推上云。
-    try{localStorage.removeItem(JOURNEY_KEY);}catch(_){}
+    try{localStorage.removeItem(JOURNEY_KEY);localStorage.removeItem('cat-garden-coach-v2');localStorage.removeItem(RESULTS_KEY);}catch(_){}
     location.reload();
   });
   parent.append(clear);
@@ -625,16 +626,14 @@ function confirmAction(options={}){
 function apiMessage(error,fallback){return (error&&error.message)||fallback;}
 // ---- Leaderboards. Reading is public, so a visitor can look before signing in; only their own row
 // needs an account. Ranks on how many levels a player has cleared, taken as that player's best day.
-let rankRange='all',rankRows=null,rankBusy=false;
+let rankRange='all',rankRows=null,rankBusy=false,rankSequence=0;
 async function loadRank(range){
   rankRange=range;
   const tabs=$('rank-tabs');
   if(tabs)for(const b of tabs.querySelectorAll('button')){const on=b.dataset.range===range;b.classList.toggle('is-on',on);b.setAttribute('aria-pressed',on?'true':'false');}
-  if(rankBusy)return;
-  rankBusy=true;rankRows=null;renderRank();
-  try{rankRows=await apiFetch('/leaderboard?range='+range);}
-  catch(_){rankRows={error:true,entries:[],me:null};}
-  rankBusy=false;renderRank();
+  const sequence=++rankSequence;rankBusy=true;rankRows=null;renderRank();
+  let rows;try{rows=await apiFetch('/leaderboard?range='+range);}catch(_){rows={error:true,entries:[],me:null};}
+  if(sequence!==rankSequence)return;rankRows=rows;rankBusy=false;renderRank();
 }
 function renderRank(){
   const box=$('rank-cards');if(!box)return;
@@ -653,6 +652,8 @@ function renderRank(){
   if(rankBusy&&!rankRows){say('正在读取榜单…');return;}
   if(rankRows?.error){say('榜单暂时读不到，稍后再试。');return;}
   const entries=rankRows?.entries||[];
+  if(rankRows?.period){const d=v=>new Date(v).toLocaleDateString('zh-CN',{timeZone:'Asia/Shanghai'});say((rankRange==='day'?'今日':'本周')+'首次通关 · '+d(rankRows.period.start)+(rankRange==='week'?' — '+d(new Date(new Date(rankRows.period.end).getTime()-1)):'')+' · 北京时间');}
+  if(rankRange!=='all'&&rankRows?.trackingSince)say('新统计始于 '+new Date(rankRows.trackingSince).toLocaleDateString('zh-CN',{timeZone:'Asia/Shanghai'})+'；此前成绩保留在总榜。');
   if(!entries.length){say('这个榜单还没有人上榜 —— 过一关就是第一名。');box.append(standing());return;}
   const list=document.createElement('ol');list.className='rank-list';
   for(const entry of entries){
@@ -673,6 +674,39 @@ function rankAvatar(entry){
   else span.textContent=(entry.name||'猫').trim().slice(0,1);
   return span;
 }
+const RESULTS_KEY='cat-sudoku-results-v1',PENDING_KEY='cat-sudoku-pending-results-v1';
+let results=R.merge(store.get(RESULTS_KEY)||[]),pendingResults=store.get(PENDING_KEY)||[],resultSending=false,resultRetry=0,levelRankSequence=0;
+function resultOwner(){return account?.signedIn?String(account.player?.id??account.id??''):null;}
+async function awaitResults(){try{const data=await apiFetch('/results');results=R.merge(results,data.results.map(run=>({...run,owner:resultOwner()})));store.set(RESULTS_KEY,results);}catch(_){}}
+function preciseTime(ms){return time(ms)+'.'+Math.floor(ms%1000/100);}
+function finishResult(){
+ const g=game(),l=currentLevel(),run={owner:resultOwner()||'guest',id:g.attemptId,levelId:l.id,elapsedMs:Math.round(g.elapsed/100)*100,hints:g.hints,conflicts:g.conflicts,guides:g.guides,finishedAt:new Date().toISOString()};
+ const summary=R.summarize(run,results.filter(old=>(old.owner||'guest')===run.owner));$('win-time').textContent=preciseTime(run.elapsedMs);
+ $('win-best').textContent=summary.first?'你的首个'+(summary.independent?'独立':'辅助')+'完成记录':summary.improvedMs>0?'刷新个人纪录 · 快了 '+(summary.improvedMs/1000).toFixed(1)+' 秒':'同模式个人最佳 '+preciseTime(summary.bestMs);
+ $('win-badge').textContent=summary.title;
+ if(!g.submitted){g.submitted=true;results=R.merge(results,[run]);store.set(RESULTS_KEY,results);if(resultOwner()){pendingResults.push({owner:resultOwner(),run:{...run,cats:Array.from({length:l.size},(_,r)=>g.board.slice(r*l.size,(r+1)*l.size).indexOf(E.CAT))}});store.set(PENDING_KEY,pendingResults);}}
+ $('level-rank-independent').setAttribute('aria-pressed',String(summary.independent));$('level-rank-assisted').setAttribute('aria-pressed',String(!summary.independent));
+ flushResults().then(()=>loadLevelRank(summary.independent?'independent':'assisted'));
+}
+async function flushResults(){
+ if(resultSending||!resultOwner())return;resultSending=true;const owner=resultOwner();
+ try{for(const item of [...pendingResults].filter(x=>x.owner===owner)){
+   if(resultOwner()!==owner)break;
+   try{await apiFetch('/complete',{method:'POST',headers:{'Content-Type':'application/json'},keepalive:true,body:JSON.stringify(item.run)});pendingResults=pendingResults.filter(x=>x!==item);store.set(PENDING_KEY,pendingResults);}
+   catch(e){if(e.status===400){pendingResults=pendingResults.filter(x=>x!==item);store.set(PENDING_KEY,pendingResults);toast('这次成绩未通过规则校验，仅保留本机记录');continue;}throw e;}
+ }}catch(_){clearTimeout(resultRetry);resultRetry=setTimeout(flushResults,10000);}finally{resultSending=false;}
+}
+async function loadLevelRank(mode='independent'){
+ const sequence=++levelRankSequence,id=currentLevel().id,box=$('level-rank-list');box.textContent='正在读取真实成绩…';
+ for(const name of ['independent','assisted'])$('level-rank-'+name).setAttribute('aria-pressed',String(name===mode));
+ try{const data=await apiFetch('/level-leaderboard?level='+encodeURIComponent(id)+'&mode='+mode);if(sequence!==levelRankSequence||id!==currentLevel().id)return;
+  box.replaceChildren();for(const entry of data.entries){const row=el('li',entry.isMe?'is-me':'');row.append(el('b',null,String(entry.rank)),el('span',null,entry.name+(entry.isMe?'（你）':'')),el('strong',null,preciseTime(entry.elapsedMs)),el('small',null,entry.conflicts+' 次冲突'));box.append(row);}
+  if(!data.entries.length)box.append(el('li','rank-empty','还没有成绩，等你来挑战。'));
+  $('level-rank-me').textContent=data.me?'你的最佳排名：第 '+data.me.rank+' / '+data.total+' 名'+(data.gapMs!==null?' · 距前一名 '+(data.gapMs/1000).toFixed(1)+' 秒':' · 并列成绩同名次'):resultOwner()?(pendingResults.some(x=>x.owner===resultOwner()&&x.run.levelId===id)?'成绩等待联网同步':'你还没有这个模式的成绩'):'登录后，新的通关成绩才能参与排名';
+ }catch(_){if(sequence===levelRankSequence){box.textContent='暂时无法读取榜单';$('level-rank-me').textContent='本机成绩已保留，可以稍后重试。';}}
+}
+$('level-rank-independent').addEventListener('click',()=>loadLevelRank('independent'));
+$('level-rank-assisted').addEventListener('click',()=>loadLevelRank('assisted'));
 let levelIndex=0,mode='cycle',focused=0,manualCheck=false,cells=[],lastTick=performance.now(),stroke=null,lastTouch=0,celebrationTimer;
 let prefs={sound:true,motion:true,haptic:true,letters:false,live:true};
 try{const saved=JSON.parse(localStorage.getItem('cat-garden-preferences-v2')||'null');if(saved)for(const key of Object.keys(prefs))if(typeof saved[key]==='boolean')prefs[key]=saved[key];}catch(_){}
@@ -754,94 +788,31 @@ if(new URLSearchParams(location.search).get('embed')==='1')document.body.classLi
 try{const ids=new Set();if(!Array.isArray(levels)||!levels.length)throw Error('没有关卡');levels.forEach(l=>{E.validateLevel(l);if(ids.has(l.id))throw Error('重复的关卡 id');ids.add(l.id);});}catch(error){$('status').textContent='关卡数据错误：'+error.message;$('status').hidden=false;return;}
 function currentLevel(){return levels[levelIndex];}
 function game(){return sessions.get(currentLevel().id);}
-function newGame(level){return{board:J.startBoard(level),givens:J.forLevel(level).givens.slice(),history:[],elapsed:0,started:false,paused:false,won:false,trial:null,trialNotes:[]};}
+function newGame(level){return{attemptId:crypto.randomUUID?crypto.randomUUID():Date.now()+'-'+Math.random().toString(36).slice(2),hints:0,conflicts:0,guides:0,submitted:false,board:J.startBoard(level),givens:J.forLevel(level).givens.slice(),history:[],elapsed:0,started:false,paused:false,won:false,trial:null,trialNotes:[]};}
 function modalOpen(){return $('settings-dialog').open||$('tutorial-dialog').open||$('picker-dialog').open||$('confirm-dialog').open;}
 function time(ms){const seconds=Math.floor(ms/1000);return String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0');}
-function tick(){const now=performance.now(),g=game();if(g&&g.started&&!g.paused&&!g.won&&!document.hidden&&!modalOpen())g.elapsed+=now-lastTick;lastTick=now;if(g)$('timer').textContent=time(g.elapsed);}
-function record(kind='move'){tick();const g=game();g.history.push({board:g.board.slice(),elapsed:g.elapsed,started:g.started,paused:g.paused,won:g.won,trial:T.clone(g.trial),trialNotes:T.copyNotes(g.trialNotes),kind});}
-// The home route: one continuous winding trail, one rung per level, no legs. 162 rungs in a column
-// would make a 12,000px page, so the trail lives in its own scroll box and only the rungs around the
-// viewport exist in the DOM. Every rung is placed absolutely on a track of fixed height, so the
-// scroll geometry stays exact and nothing shifts as that window of rendered levels slides.
-const STEP=74,KEEP=9;
-let trailEl=null,trailH=0;
-const nodeEls=new Map();
-// Head and tail room, half the box each, so even the first and the last level can sit in the middle.
-// Measured once per build and cached: paintTrail runs on every scroll frame and must not read layout.
-let trailPadPx=200;
-function measurePad(){
-  const box=$('path-scroll');
-  const vh=box&&box.clientHeight?box.clientHeight:innerHeight;
-  trailPadPx=Math.max(150,Math.min(640,Math.round(vh*.5)));
-}
-function trailHeight(){return (levels.length-1)*STEP+trailPadPx*2;}
-function nodeY(i){return trailPadPx+(levels.length-1-i)*STEP;}
-// A gentle two-wave S - a six-level swing plus a slow drift - so the rungs read as a path, not a ladder.
-function nodeX(i){return 50+23*Math.sin(i*Math.PI/3)+6*Math.sin(i*.5236+1.1);}
-function buildTrail(path,total){
-  path.replaceChildren();nodeEls.clear();
-  const track=document.createElement('div');track.className='trail';track.style.height=total+'px';
-  const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');
-  svg.setAttribute('class','trail-line');svg.setAttribute('viewBox','0 0 100 '+total);svg.setAttribute('preserveAspectRatio','none');
-  let d='';
-  for(let i=0;i<levels.length;i++)d+=(i?' L ':'M ')+nodeX(i)+' '+nodeY(i);
-  const line=document.createElementNS(ns,'path');line.setAttribute('d',d);line.setAttribute('vector-effect','non-scaling-stroke');
-  svg.append(line);track.append(svg);
-
-  const cat=document.createElement('div');cat.className='trail-cat';cat.id='trail-cat';cat.setAttribute('aria-hidden','true');
-  cat.innerHTML=catSVG;track.append(cat);
-
-  path.append(track);trailEl=track;trailH=total;
-}
-function buildNode(i){
-  const b=document.createElement('button');b.type='button';b.dataset.index=i;
-  b.style.left=nodeX(i)+'%';b.style.top=nodeY(i)+'px';
-  b.addEventListener('click',()=>{sound('erase');openLevel(i);});
-  return b;
-}
-// Re-dress in place: a rung that scrolls back into view must show the progress it has by then.
-function dressNode(el,i){
-  const l=levels[i],done=journey.completed.includes(l.id),here=i===levelIndex;
-  el.className='node'+(done?' is-done':'')+(here?' is-here':'');
-  el.setAttribute('aria-label','第 '+(i+1)+' 关，'+l.size+' × '+l.size+(done?'，已完成':''));
-  if(here)el.setAttribute('aria-current','step');else el.removeAttribute('aria-current');
-  el.innerHTML='<span class="node-no">'+(l.source?.type==='user-screenshot'?l.source.referenceLevel:i+1)+'</span>'+(done?'<span class="node-tick">✓</span>':'');
-}
-// Everything outside the viewport is empty track, which is what keeps a 162-level trail cheap.
-function paintTrail(){
-  if(!trailEl)return;
-  const n=levels.length,box=$('path-scroll');
-  const vh=box&&box.clientHeight?box.clientHeight:innerHeight;
-  const top=box?box.scrollTop:0,pad=trailPadPx;
-  const hi=Math.ceil(n-1-(top-KEEP*STEP-pad)/STEP);
-  const lo=Math.floor(n-1-(top+vh+KEEP*STEP-pad)/STEP);
-  const from=Math.max(0,Math.min(lo,n-1)),to=Math.min(n-1,Math.max(hi,from));
-  for(const [i,el] of nodeEls)if(i<from||i>to){el.remove();nodeEls.delete(i);}
-  for(let i=from;i<=to;i++){
-    let el=nodeEls.get(i);
-    if(!el){el=buildNode(i);nodeEls.set(i,el);trailEl.append(el);}
-    dressNode(el,i);
-  }
-}
-// Repaint as the box scrolls, throttled to one frame so a flick does not queue a hundred repaints.
-let trailQueued=false;
-$('path-scroll').addEventListener('scroll',()=>{
-  if(document.body.dataset.view!=='home'||trailQueued)return;
-  trailQueued=true;requestAnimationFrame(()=>{trailQueued=false;paintTrail();});
-},{passive:true});
+function tick(){const now=performance.now(),g=game();if(R.activeTime(g,!document.hidden,modalOpen(),document.body.dataset.view))g.elapsed+=now-lastTick;lastTick=now;if(g)$('timer').textContent=time(g.elapsed);}
+function record(kind='move'){tick();const g=game();g.history.push({runMeta:kind==='reset'?{attemptId:g.attemptId,hints:g.hints,conflicts:g.conflicts,guides:g.guides,submitted:g.submitted}:null,board:g.board.slice(),elapsed:g.elapsed,started:g.started,paused:g.paused,won:g.won,trial:T.clone(g.trial),trialNotes:T.copyNotes(g.trialNotes),kind});}
+const nodeEls=new Map();let routeBuilt=false;
+function paintTrail(){}
+function measurePad(){}
 function renderPath(){
-  const path=$('path');if(!path)return;
-  if(!trailEl||!path.contains(trailEl))measurePad();
-  const total=trailHeight();
-  if(!trailEl||trailH!==total||!path.contains(trailEl))buildTrail(path,total);
-  paintTrail();
-  moveCat(levelIndex,false);
-  const doneAll=journey.completed.length,tips=tutorial?.learnedCount()??0;
-  $('home-progress').textContent=doneAll+' / '+levels.length+' 关';
-  $('home-skill').textContent='技巧 '+tips+' / 16';
-  $('home-done').textContent='已通关 '+doneAll;
-  $('me-skill-count').textContent=tips+' / 16';
-  renderMe();
+ const path=$('path');if(!path)return;
+ if(!routeBuilt){
+  path.replaceChildren();const names=['窗边初遇','花园漫步','屋顶探险','星光推理'];
+  for(let start=0;start<levels.length;start+=10){
+   const end=Math.min(start+10,levels.length),chapter=document.createElement('details');chapter.className='route-chapter';chapter.dataset.start=start;chapter.style.setProperty('--chapter-tone',['#e4f1e9','#fff1d8','#eae5f6','#e1edf6'][Math.floor(start/10)%4]);
+   const title=document.createElement('summary');title.innerHTML='<span class="chapter-art" aria-hidden="true">'+['❀','☀','☾','✦'][Math.floor(start/10)%4]+'</span><span><small>第 '+(Math.floor(start/10)+1)+' 站 · '+(start+1)+'—'+end+' 关</small><b>'+names[Math.floor(start/10)%4]+'</b></span><em></em>';chapter.append(title);
+   const track=document.createElement('div');track.className='chapter-track';
+   for(let i=start;i<end;i++){const button=document.createElement('button');button.type='button';button.dataset.index=i;button.addEventListener('click',()=>openLevel(i));nodeEls.set(i,button);track.append(button);}
+   chapter.append(track);path.append(chapter);
+  }routeBuilt=true;
+ }
+ for(const [i,button] of nodeEls){const done=journey.completed.includes(levels[i].id),here=i===levelIndex;button.className='route-node'+(done?' is-done':'')+(here?' is-here':'');button.innerHTML='<span>'+String(i+1)+'</span>'+(done?'<i>✓</i>':here?'<i class="route-cat">'+catSVG+'</i>':'');button.setAttribute('aria-label','第 '+(i+1)+' 关'+(done?'，已完成':'')+(here?'，当前关卡':''));if(here)button.setAttribute('aria-current','step');else button.removeAttribute('aria-current');}
+ for(const chapter of path.children){const start=Number(chapter.dataset.start),end=Math.min(start+10,levels.length),count=levels.slice(start,end).filter(l=>journey.completed.includes(l.id)).length;chapter.querySelector('em').textContent=count+'/'+(end-start);if(levelIndex>=start&&levelIndex<end)chapter.open=true;}
+ const done=journey.completed.length,tips=tutorial?.learnedCount()??0;
+ $('home-progress').textContent=done+' / '+levels.length+' 关';$('home-skill').textContent='练习过 '+tips+' 个技巧';$('home-done').textContent='已通关 '+done;$('me-skill-count').textContent=tips+' / 16';
+ $('continue-label').textContent=(journey.completed.includes(currentLevel().id)?'再挑战':'继续探索')+' · 第 '+(levelIndex+1)+' 关';$('route-progress').style.width=(done/levels.length*100)+'%';renderMe();
 }
 // Every level as a compact grid, so picking a specific number takes one tap instead of a long scroll.
 function renderPicker(){
@@ -861,26 +832,13 @@ function renderPicker(){
   });
   $('picker-total').textContent=journey.completed.length+' / '+levels.length+' 关完成';
 }
-function moveCat(index,animate=true){
-  const cat=$('trail-cat');if(!cat||index<0)return;
-  cat.style.transition=animate?'':'none';
-  cat.style.left=nodeX(index)+'%';cat.style.top=nodeY(index)+'px';
-  cat.classList.toggle('is-moving',animate);
-  if(animate)setTimeout(()=>cat.classList.remove('is-moving'),620);
-}
-// Park the current rung in the middle of the trail box. The geometry is known exactly, so this is
-// arithmetic rather than a DOM measurement - the two can never drift apart.
-function centerCat(smooth=true){
-  const box=$('path-scroll');if(!box)return;
-  const vh=box.clientHeight||innerHeight;
-  const top=Math.max(0,Math.min(Math.max(0,box.scrollHeight-vh),nodeY(levelIndex)-vh*.5));
-  box.scrollTo({top,behavior:smooth&&prefs.motion&&!reduceMotion.matches?'smooth':'instant'});
-  paintTrail();
-}
+function moveCat(){}
+function centerCat(smooth=true){const chapter=nodeEls.get(levelIndex)?.closest('details');if(chapter){chapter.open=true;const box=$('path-scroll');box.scrollTo({top:Math.max(0,chapter.offsetTop-$('path').offsetTop-12),behavior:smooth&&!reduceMotion.matches?'smooth':'instant'});}}
+$('continue-game').addEventListener('click',()=>openLevel(levelIndex));
 function selectLevel(index){
   if(!Number.isInteger(index)||index<0||index>=levels.length)throw Error('关卡编号无效');finishStroke(true);tutorial?.stop();lastTap=null;clearHint();tick();levelIndex=index;manualCheck=false;focused=0;
   const l=currentLevel();colors=l.regionColors||defaultColors;if(!sessions.has(l.id))sessions.set(l.id,newGame(l));
-  $('level-title').textContent=l.source?.type==='user-screenshot'?l.name:'第 '+(index+1)+' 关';$('level-subtitle').textContent=l.size+' × '+l.size+(game().givens.length?' · '+game().givens.length+' 只猫已就位':(l.source?' · 原始空盘':' · 自由推理'));
+  $('level-title').textContent='第 '+(index+1)+' 关';$('level-subtitle').textContent=l.size+' × '+l.size+(game().givens.length?' · '+game().givens.length+' 只猫已就位':(l.source?' · 原始空盘':' · 自由推理'));
   // Difficulty as a cat count, so a player can see what they are walking into before the first move.
   // Text only - the subtitle line is kept short on purpose so it never wraps on a phone.
   const tier=J.difficultyFor(l);
@@ -893,7 +851,7 @@ function selectLevel(index){
     b.addEventListener('contextmenu',ev=>{ev.preventDefault();if(ev.pointerType==='touch'||performance.now()-lastTouch<800||stroke)return;unlockAudio();act(i,'mark');});
     b.addEventListener('focus',()=>{focused=i;cells.forEach((cell,j)=>cell.tabIndex=j===i?0:-1);});b.addEventListener('keydown',ev=>onCellKey(ev,i));row.append(b);cells.push(b);
   }$('board').append(row);}
-  clearTimeout(celebrationTimer);$('celebration').replaceChildren();lastTick=performance.now();render();renderPath();
+  clearTimeout(celebrationTimer);$('celebration').replaceChildren();if(document.body.dataset.view==='game')game().started=true;lastTick=performance.now();render();renderPath();
   const unit=J.unitFor(l);
   if(unit.lessons.length)setTimeout(()=>{if(document.body.dataset.view!=='game')return;
    // A lesson about a dead end (假设 + 撤回) is armed rather than shown: it waits for the board to actually
@@ -917,32 +875,27 @@ function render(message,quiet=false,guideEvent={}){
     b.classList.toggle('conflict',conflict);b.setAttribute('aria-label','第 '+(r+1)+' 行，第 '+(c+1)+' 列，区域 '+String.fromCharCode(65+region)+'，'+['空白','已标记排除','猫咪'][v]+(g.givens.includes(i)?'，已安置的固定猫':'')+(trialRoot?'，假设起点':changed?'，本轮假设改动':note?(note.excluded?'，上次假设后手动排除':'，之前试过的假设'):'')+(conflict?'，存在冲突':''));b.setAttribute('aria-selected',String(v===E.CAT));b.tabIndex=i===focused?0:-1;b.disabled=g.paused||g.won;
   });
   $('board').classList.toggle('hinting',Boolean(activeHint&&(activeHint.hint.targets.length||activeHint.hint.evidence?.length)));$('board').inert=g.paused;$('board-shell').style.visibility=g.paused?'hidden':'visible';$('cat-count').textContent=result.cats+' / '+l.size;$('progress').max=l.size;$('progress').value=Math.min(l.size,result.cats);$('progress').setAttribute('aria-valuetext','已放 '+result.cats+' 只，需要 '+l.size+' 只');$('timer').textContent=time(g.elapsed);
-  $('undo').disabled=!g.history.length;$('reset').disabled=!g.started&&!g.board.some(Boolean);$('pause').disabled=g.won;$('pause').textContent=g.paused?'▷':'Ⅱ';$('pause').setAttribute('aria-label',g.paused?'继续游戏':'暂停游戏');$('pause-cover').hidden=!g.paused;$('trial-open').disabled=g.paused||g.won||Boolean(g.trial);$('trial-open').setAttribute('aria-pressed',String(Boolean(g.trial)));$('hint-request').disabled=g.paused||g.won;
+  $('undo').disabled=g.won||!g.history.length;$('reset').disabled=!g.started&&!g.board.some(Boolean);$('pause').disabled=g.won;$('pause').textContent=g.paused?'▷':'Ⅱ';$('pause').setAttribute('aria-label',g.paused?'继续游戏':'暂停游戏');$('pause-cover').hidden=!g.paused;$('trial-open').disabled=g.paused||g.won||Boolean(g.trial);$('trial-open').setAttribute('aria-pressed',String(Boolean(g.trial)));$('hint-request').disabled=g.paused||g.won;
   if(!quiet){$('status').className='status';if(g.won){$('status').textContent='每行、每列、每种颜色都刚刚好。';$('status').classList.add('success');}
     else if(g.paused)$('status').textContent='游戏和计时已暂停。';else if(show&&result.issues.length){$('status').textContent=result.issues.join('；')+'。';$('status').classList.add('error');}
     else $('status').textContent=message||(g.started?'慢慢想，不着急。':'猫咪不能挨在一起，斜角也不行。');}
-  $('win').hidden=!g.won;$('win-detail').textContent='用时 '+time(g.elapsed)+' · '+l.size+' 只猫，各得其所。';$('next').textContent=levelIndex<levels.length-1?'下一关':'再玩这一关';
+  $('win').hidden=!g.won;$('win-detail').textContent=(g.hints||g.guides?'借助线索完成':'独立完成')+' · '+g.conflicts+' 次规则冲突';$('next').textContent=levelIndex<levels.length-1?'下一关':'再玩这一关';
   renderTrial();
   tutorial?.sync({...guideEvent,painting:Boolean(stroke?.painting)});drawHint();
-  if(g.won&&!wasWon){if(!journey.completed.includes(l.id)){journey.completed.push(l.id);saveJourney();}haptic([28,55,28,55,28,55,80]);sound('win');celebrate();$('next').focus();}if(wasWon!==g.won)renderPath();
+  if(g.won&&!wasWon){finishResult();if(!journey.completed.includes(l.id)){journey.completed.push(l.id);saveJourney();}haptic([28,55,28,55,28,55,80]);sound('win');celebrate();$('next').focus();}if(wasWon!==g.won)renderPath();
 }
 function locationName(index){const n=currentLevel().size;return '第 '+(Math.floor(index/n)+1)+' 行第 '+(index%n+1)+' 列';}
 function setLabel(id,text){$(id).querySelector('.btn-label').textContent=text;}
 function renderTrial(){
-  const g=game(),trial=g.trial,bar=$('toolbar'),open=$('trial-open'),root=trial?.root??null;
-  bar.classList.toggle('trial-mode',Boolean(trial));
-  bar.setAttribute('aria-label',trial?'假设推演操作':'棋盘操作');
-  const issues=trial&&root!==null?T.contradictions(currentLevel(),g.board):[];
-  if(!trial){
-   setLabel('trial-open','假设');setLabel('hint-request','提示');setLabel('tutorial-open','技巧');
-   open.title='保存当前盘面，试着假设某格有猫';open.removeAttribute('aria-description');
-   $('hint-request').disabled=g.paused||g.won;$('tutorial-open').disabled=false;return;
-  }
-  // The trial state is carried by the swapped button labels and the amber toolbar only — no extra text row.
-  const hint=root===null?'已保存原盘：点一个空格当作假设起点':'假设起点 '+locationName(root)+(issues.length?'，发现 '+issues.length+' 处矛盾':'，这一轮随时可以退回');
-  open.title=hint;open.setAttribute('aria-description',hint);
-  setLabel('trial-open',root===null?'取消假设':'撤回假设');setLabel('hint-request','排除起点');setLabel('tutorial-open','保留推演');
-  open.disabled=g.paused;$('hint-request').disabled=g.paused||root===null;$('tutorial-open').disabled=g.paused||root===null||issues.length>0;
+ const g=game(),trial=g.trial,root=trial?.root??null,issues=trial&&root!==null?T.contradictions(currentLevel(),g.board):[];
+ $('toolbar').classList.remove('trial-mode');
+ for(const [id,label] of [['trial-open','假设'],['hint-request','提示'],['tutorial-open','技巧']])setLabel(id,label);
+ $('trial-open').disabled=g.paused||g.won; $('hint-request').disabled=g.paused||g.won;
+ $('trial-tools').hidden=!trial||g.paused||g.won||Boolean(activeHint);
+ $('trial-caption').textContent=root===null?'点一格，试着放猫':locationName(root)+(issues.length?' · 出现矛盾':' · 假设中');
+ $('trial-return').textContent=root===null?'取消':'撤回';
+ $('trial-exclude').disabled=root===null; $('trial-keep').disabled=root===null||issues.length>0;
+ if(!$('trial-tools').hidden){const panel=$('trial-tools'),board=$('board').getBoundingClientRect(),width=panel.offsetWidth,height=panel.offsetHeight;panel.style.bottom='auto';panel.style.top=Math.max(8,board.top-height-8)+'px';panel.style.left=(board.right+width+20<innerWidth?board.right+12+width/2:Math.max(width/2+12,Math.min(innerWidth-width/2-12,board.left+board.width/2)))+'px';}
 }
 function startTrial(){finishStroke(true);const g=game();if(g.paused||g.won||g.trial)return;unlockAudio();record('trial-start');g.trial=T.create(g.board,g.trialNotes);g.started=true;render('点一格，开始这次假设。');sound('trial');haptic([10,40,16]);}
 function chooseTrialRoot(index){
@@ -961,7 +914,7 @@ function keepTrial(){
   record('trial-keep');g.trialNotes=g.trialNotes.filter(note=>g.board[note.index]===g.trial.baseBoard[note.index]);g.trial=null;render('已保留本轮推演。仍可用撤销恢复。');sound('cat');haptic([16,50,24]);
 }
 function act(index,chosen=mode){const g=game();if(g.paused||g.won||modalOpen())return;if(g.trial?.root===null){chooseTrialRoot(index);return;}const old=g.board[index],value=chosen==='cat'?(old===E.CAT?E.EMPTY:E.CAT):chosen==='mark'?(old===E.MARK?E.EMPTY:E.MARK):(old===E.EMPTY?E.MARK:E.EMPTY);setCell(index,value);}
-function setCell(index,value){const g=game();if(g.paused||g.won||modalOpen())return;if(g.givens.includes(index)){render('这只猫已安置，是本关的固定线索。');return;}if(g.trial?.root===null){if(value===E.CAT)chooseTrialRoot(index);else render('先点一格作为假设猫。');return;}if(g.trial?.root===index&&value!==E.CAT){render('假设起点已锁定。用“撤回假设”恢复原盘。');return;}const next=E.setCell(g.board,index,value);if(g.board[index]===value)return;record();g.board=next;g.trialNotes=g.trialNotes.filter(note=>note.index!==index);g.started=true;focused=index;manualCheck=false;render();feedback(index,value);}
+function setCell(index,value){const g=game();if(g.paused||g.won||modalOpen())return;if(g.givens.includes(index)){render('这只猫已安置，是本关的固定线索。');return;}if(g.trial?.root===null){if(value===E.CAT)chooseTrialRoot(index);else render('先点一格作为假设猫。');return;}if(g.trial?.root===index&&value!==E.CAT){render('假设起点已锁定。用“撤回假设”恢复原盘。');return;}const next=E.setCell(g.board,index,value);if(g.board[index]===value)return;record();if(value===E.CAT&&!g.trial&&E.inspect(currentLevel(),next).conflicts.includes(index))g.conflicts++;g.board=next;g.trialNotes=g.trialNotes.filter(note=>note.index!==index);g.started=true;focused=index;manualCheck=false;render();feedback(index,value);}
 
 function tapCell(index){
  const g=game(),now=performance.now();
@@ -994,6 +947,7 @@ function presentHint(hint){
  // forward would silently close the 假设 walk-through at the exact moment the player needs it most.
  if(!tutorial?.teaching?.())tutorial?.stop();
  clearHint();const g=game();activeHint={hint,key:hintKey(),board:g.board.slice(),trial:g.trial?'trial:'+g.trial.root:'normal'};
+  if(hint.value!==undefined&&hint.targets?.length)g.hints++;
   noteSkillUsed(hint.kind);
   const visual=window.CatHints.visual(currentLevel(),g.board,hint);activeHint.visual=visual;
  $('hint-title').textContent=visual.title;$('hint-short').textContent=visual.text;$('hint-text').textContent=hint.text||visual.text;$('hint-more').open=false;
@@ -1046,7 +1000,7 @@ function drawHintLines(){
  if(activeHint.hint.kind==='lookahead-region'&&activeHint.hint.evidence?.length){const a=cells[activeHint.hint.targets[0]].getBoundingClientRect(),b=cells[activeHint.hint.evidence[0]].getBoundingClientRect(),line=document.createElementNS(ns,'path');line.setAttribute('d','M '+(a.left+a.width/2-r.left)+' '+(a.top+a.height/2-r.top)+' L '+(b.left+b.width/2-r.left)+' '+(b.top+b.height/2-r.top));line.setAttribute('stroke-dasharray','5 5');svg.append(line);}
 }
 $('hint-more').addEventListener('toggle',positionHint);
-window.addEventListener('resize',positionHint);window.addEventListener('scroll',positionHint,{passive:true});
+window.addEventListener('resize',()=>{positionHint();if(game())renderTrial();});window.addEventListener('scroll',positionHint,{passive:true});
 
 // A stroke records one undo snapshot. Revisits never toggle and cats are protected.
 function paint(index){if(!stroke||stroke.visited.has(index)||game().trial?.root===null)return;stroke.visited.add(index);const g=game();if(g.board[index]===E.CAT||g.board[index]===stroke.value)return;if(!stroke.changed)record();g.board[index]=stroke.value;g.trialNotes=g.trialNotes.filter(note=>note.index!==index);g.started=true;stroke.changed++;focused=index;manualCheck=false;render(undefined,true);feedback(index,stroke.value,true);}
@@ -1076,8 +1030,8 @@ $('board').addEventListener('pointerup',ev=>{if(stroke&&ev.pointerId===stroke.id
 $('board').addEventListener('pointercancel',ev=>{if(stroke&&ev.pointerId===stroke.id)finishStroke(true);});
 $('board').addEventListener('lostpointercapture',()=>finishStroke(true));
 window.addEventListener('blur',()=>finishStroke(true));
-function undo(){finishStroke(true);lastTap=null;const g=game();if(!g.history.length)return;tick();const elapsed=g.elapsed,paused=g.paused,started=g.started,{kind,...state}=g.history.pop();Object.assign(g,state);if(kind!=='reset'){g.elapsed=elapsed;g.paused=paused;g.started=started;}manualCheck=false;lastTick=performance.now();$('celebration').replaceChildren();render('已撤销上一步。');renderPath();sound('erase');haptic(9);if(!g.paused&&!g.won)cells[focused].focus({preventScroll:true});}
-function reset(){finishStroke(true);const g=game();if(!g.started&&!g.board.some(Boolean))return;record('reset');const history=g.history;Object.assign(g,newGame(currentLevel()));g.history=history;manualCheck=false;lastTick=performance.now();$('celebration').replaceChildren();closeDialog('settings-dialog');render('已重置，撤销可以恢复。');renderPath();sound('erase');}
+function undo(){finishStroke(true);lastTap=null;const g=game();if(g.won||!g.history.length)return;tick();const elapsed=g.elapsed,paused=g.paused,started=g.started,{kind,runMeta,...state}=g.history.pop();Object.assign(g,state);if(runMeta)Object.assign(g,runMeta);if(kind!=='reset'){g.elapsed=elapsed;g.paused=paused;g.started=started;}manualCheck=false;lastTick=performance.now();$('celebration').replaceChildren();render('已撤销上一步。');renderPath();sound('erase');haptic(9);if(!g.paused&&!g.won)cells[focused].focus({preventScroll:true});}
+function reset(){finishStroke(true);const g=game();if(!g.started&&!g.board.some(Boolean))return;record('reset');const history=g.history;Object.assign(g,newGame(currentLevel()));g.history=history;g.started=document.body.dataset.view==='game';manualCheck=false;lastTick=performance.now();$('celebration').replaceChildren();closeDialog('settings-dialog');render('已重置，撤销可以恢复。');renderPath();sound('erase');}
 function pause(){finishStroke(true);const g=game();if(g.won)return;tick();g.paused=!g.paused;lastTick=performance.now();render();if(g.paused)$('resume').focus();else cells[focused].focus({preventScroll:true});}
 function onCellKey(ev,index){
   const n=currentLevel().size,r=Math.floor(index/n),c=index%n;let target;
@@ -1111,30 +1065,28 @@ for(const dlg of document.querySelectorAll('dialog')){
 document.addEventListener('change',ev=>{const input=ev.target?.closest?.('input[data-pref]');if(input)setPref(input.dataset.pref,input.checked);});
 document.addEventListener('click',ev=>{const button=ev.target?.closest?.('[data-pref-toggle]');if(!button)return;unlockAudio();sound('erase');setPref(button.dataset.prefToggle,!prefs[button.dataset.prefToggle]);});
 reduceMotion.addEventListener('change',applyPrefs);
-$('hint-close').addEventListener('click',clearHint);
-$('hint-request').addEventListener('click',requestHint);$('hint-apply').addEventListener('click',applyHint);$('hint-dismiss').addEventListener('click',()=>{clearHint();tutorial?.sync();});
-// While a hypothesis runs, 提示 / 技巧 become 排除起点 / 保留推演 - intercepted here so the normal actions stay untouched.
-$('toolbar').addEventListener('click',ev=>{
-  if(!game()?.trial)return;const id=ev.target.closest('button')?.id;
-  if(id==='hint-request'){ev.preventDefault();ev.stopPropagation();unlockAudio();returnTrial(true);}
-  else if(id==='tutorial-open'){ev.preventDefault();ev.stopPropagation();unlockAudio();keepTrial();}
-},true);
+$('hint-close').addEventListener('click',()=>{clearHint();renderTrial();});
+$('hint-request').addEventListener('click',requestHint);$('hint-apply').addEventListener('click',applyHint);$('hint-dismiss').addEventListener('click',()=>{clearHint();tutorial?.sync();renderTrial();});
+$('trial-return').addEventListener('click',()=>returnTrial(false));
+$('trial-exclude').addEventListener('click',()=>returnTrial(true));
+$('trial-keep').addEventListener('click',keepTrial);
 document.addEventListener('keydown',ev=>{if(ev.key==='Escape'&&activeHint){clearHint();$('hint-request').focus({preventScroll:true});}});
-$('undo').addEventListener('click',()=>{unlockAudio();undo();});$('reset').addEventListener('click',reset);$('pause').addEventListener('click',pause);$('resume').addEventListener('click',pause);$('trial-open').addEventListener('click',()=>{unlockAudio();if(game().trial)returnTrial(false);else startTrial();});
+$('undo').addEventListener('click',()=>{unlockAudio();undo();});$('reset').addEventListener('click',reset);$('pause').addEventListener('click',pause);$('resume').addEventListener('click',pause);$('trial-open').addEventListener('click',()=>{unlockAudio();if(game().trial){$('trial-tools').hidden=!$('trial-tools').hidden;}else startTrial();});
 $('next').addEventListener('click',()=>{if(game().trial)keepTrial();if(levelIndex<levels.length-1)selectLevel(levelIndex+1);else reset();$('level-title').scrollIntoView({block:'start'});});
 document.addEventListener('keydown',ev=>{if((ev.ctrlKey||ev.metaKey)&&ev.key.toLowerCase()==='z'&&!ev.shiftKey&&!modalOpen()){ev.preventDefault();undo();}});
 document.addEventListener('visibilitychange',()=>{finishStroke(true);tick();lastTick=performance.now();});
 
 // ---- App shell: home trail / shop / rank / me, with the board living in its own full-screen view.
 // 「我的」的子页走 #/me/<panel>，底部标签始终停在「我的」——换子页不该被当成换标签。
-const VIEWS=['home','shop','rank','me'];
+const VIEWS=['home','rank','me'];
 let currentView='home';
 function go(view,push=true){
   const [base,panel]=String(view||'').split('/');
   const next=base==='game'||VIEWS.includes(base)?base:'home';
   const sub=next==='me'&&ME_PANELS.includes(panel)?panel:'';
-  if(next==='game'){finishStroke(true);tick();window.scrollTo(0,0);}
+  finishStroke(true);tick();if(next==='game'){window.scrollTo(0,0);game().started=true;}
   currentView=next;mePanel=sub;document.body.dataset.view=next;
+  if(next!=='game'){tutorial?.stop();clearHint();$('trial-tools').hidden=true;}else renderTrial();
   $('view-game').hidden=next!=='game';
   for(const id of VIEWS)$('view-'+id).hidden=id!==next;
   $('tabbar').hidden=next==='game';
@@ -1146,7 +1098,7 @@ function go(view,push=true){
   if(push&&location.hash!==hash)history.pushState({view:next,panel:sub},'',hash);
   lastTick=performance.now();
 }
-function openLevel(index){go('game');selectLevel(index);}
+function openLevel(index){if(sessions.get(levels[index].id)?.won)sessions.delete(levels[index].id);go('game');selectLevel(index);game().started=true;}
 $('tabbar').addEventListener('click',ev=>{const b=ev.target.closest('.tab');if(!b)return;unlockAudio();sound('erase');go(b.dataset.tab);});
 $('rank-tabs').addEventListener('click',ev=>{const b=ev.target.closest('button[data-range]');if(!b)return;unlockAudio();sound('erase');loadRank(b.dataset.range);});
 // 每个入口只在自己这一层做事：设置就地改、图鉴就地开弹窗，不再先跳进游戏视图。
@@ -1160,12 +1112,12 @@ $('me-reset').addEventListener('click',async()=>{
   const signedIn=Boolean(account?.signedIn);
   const yes=await confirmAction({
     title:'清除本机进度',
-    text:signedIn?'这台浏览器缓存的进度会被清空，账号里的成绩不受影响，刷新后会重新同步回来。':'通关记录和技巧掌握情况会被清空，无法恢复。',
+    text:signedIn?'这台浏览器缓存的进度会被清空，账号里的成绩不受影响，刷新后会重新同步回来。':'通关记录和技巧练习记录会被清空，无法恢复。',
     ok:'清除',danger:true,
   });
   if(!yes)return;
   // 清完刷新，让启动流程重新与云端对账：就地清空再写回会把空进度推上云。
-  try{localStorage.removeItem(JOURNEY_KEY);}catch(_){}
+  try{localStorage.removeItem(JOURNEY_KEY);localStorage.removeItem('cat-garden-coach-v2');localStorage.removeItem(RESULTS_KEY);}catch(_){}
   location.reload();
 });
 $('confirm-ok').addEventListener('click',()=>{
@@ -1182,7 +1134,7 @@ window.addEventListener('popstate',()=>go((location.hash||'#/home').slice(2),fal
 applyPrefs();selectLevel(Math.max(0,levels.findIndex(l=>l.id===journey.current)));setInterval(tick,250);tutorial=window.CatTutorial.mount({get colors(){return colors;},catSVG,crossSVG,
  context(){const g=game();return{level:currentLevel(),unit:J.unitFor(currentLevel()),board:g.board,paused:g.paused,won:g.won,trial:g.trial,trialNotes:g.trialNotes,modal:modalOpen(),off:document.body.dataset.view!=='game'};},
  beforeOpen(){finishStroke(true);clearHint();lastTap=null;tick();closeDialog('settings-dialog');},
- afterClose(){lastTick=performance.now();},onShow(){renderPath();},onDismissHint(){clearHint();},onUnavailable(){presentHint({kind:'info',title:'这里暂时用不上这个技巧',short:'继续试试，或点提示找另一条线索。',targets:[]});},
+ afterClose(){lastTick=performance.now();renderTrial();},getSkills(){return journey.skills;},onSkillsChange(skills){journey.skills=skills;saveJourney();},onShow(){if(tutorial?.visible()&&document.body.dataset.view==='game')game().guides++;renderPath();renderTrial();},onDismissHint(){clearHint();},onUnavailable(){presentHint({kind:'info',title:'这里暂时用不上这个技巧',short:'继续试试，或点提示找另一条线索。',targets:[]});},
  // 在「我的 → 技巧图鉴」里点「在当前棋盘看看」：先回到棋盘再开始这一课，用户不用自己跳。
  onLessonRequest(lesson){if(document.body.dataset.view==='game')return false;go('game');setTimeout(()=>tutorial?.openLesson(lesson),0);return true;},
  onUnitComplete(id){if(!journey.learned.includes(id)){journey.learned.push(id);saveJourney();}renderPath();}
@@ -1206,6 +1158,7 @@ if(loginResult!==null||wechatResult!==null){
 initAccount().then(()=>{
   // 登录设备数只取一次，免得每次 renderMe 都多打一个请求。
   if(account?.signedIn)apiFetch('/sessions').then(data=>{sessionCount=data.sessions.length;if(document.body.dataset.view==='me')renderMe();}).catch(()=>{});
+  if(account?.signedIn){awaitResults();flushResults();}
   if(bridge())return syncProgress();
   whenBridgeReady(()=>{syncProgress().catch(()=>{});});
 }).catch(()=>{});
