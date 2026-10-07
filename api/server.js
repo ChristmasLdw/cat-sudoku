@@ -240,6 +240,22 @@ async function initSchema() {
       primary key (player_id, day)
     );
     create index if not exists snapshots_day_reached_idx on snapshots (day, reached desc);
+    -- Recover measurable legacy daily increases without inventing per-level timestamps.
+    create table if not exists legacy_period_credits (
+      player_id bigint not null references players(id) on delete cascade,
+      day date not null, completed_count integer not null check(completed_count>0),
+      previous_count integer not null, snapshot_count integer not null,
+      recorded_at timestamptz not null, primary key(player_id,day)
+    );
+    with prior as (
+      select s.*,max(completed_count) over(partition by player_id order by day
+        rows between unbounded preceding and 1 preceding) as previous_count
+      from snapshots s where s.updated_at < (select created_at from scoring_meta where key='first-clear-v2')
+    )
+    insert into legacy_period_credits(player_id,day,completed_count,previous_count,snapshot_count,recorded_at)
+      select player_id,day,completed_count-previous_count,previous_count,completed_count,updated_at
+      from prior where previous_count is not null and completed_count>previous_count
+      on conflict do nothing;
     create table if not exists sessions (
       token       text        primary key,
       player_id   bigint      not null references players(id) on delete cascade,
@@ -463,21 +479,28 @@ async function loadProgress(playerId) {
 // ---------------------------------------------------------------- 排行榜
 
 // Natural calendar periods. First clears only; repeats and settings writes never score.
-async function leaderboard(range,playerId){
- const bounds=range==='all'?null:period(range);
+async function leaderboard(range,playerId,now=new Date()){
+ const bounds=range==='all'?null:period(range,now);
  const args=bounds?[bounds.start,bounds.end]:[];
  const where=bounds?'where c.completed_at >= $1::timestamptz and c.completed_at < $2::timestamptz':'';
- const {rows}=await pool.query(`with scores as (
-   select c.player_id,count(*)::int as completed,max(c.completed_at) as achieved_at
-   from completions c ${where} group by c.player_id
+ const legacy=bounds?`union all select h.player_id,h.completed_count,h.recorded_at,h.completed_count as legacy
+   from legacy_period_credits h
+   where h.day >= ($1::timestamptz at time zone 'Asia/Shanghai')::date
+     and h.day < ($2::timestamptz at time zone 'Asia/Shanghai')::date`:'';
+ const {rows}=await pool.query(`with events as (
+   select c.player_id,1 as amount,c.completed_at as recorded_at,0 as legacy from completions c ${where}
+   ${legacy}
+ ), scores as (
+   select player_id,sum(amount)::int as completed,max(recorded_at) as achieved_at,sum(legacy)::int as legacy_completed
+   from events group by player_id
  ), ranked as (
    select s.*,rank() over(order by completed desc)::int as rank,p.display_name,p.avatar_url,p.avatar_key
    from scores s join players p on p.id=s.player_id
  ) select * from ranked order by rank,achieved_at asc nulls last,player_id`,args);
- const entry=r=>({rank:r.rank,name:r.display_name,avatar:r.avatar_url||null,avatarKey:r.avatar_key||null,completed:r.completed,isMe:playerId?String(r.player_id)===String(playerId):false});
+ const entry=r=>({rank:r.rank,name:r.display_name,avatar:r.avatar_url||null,avatarKey:r.avatar_key||null,completed:r.completed,legacyCompleted:r.legacy_completed,isMe:playerId?String(r.player_id)===String(playerId):false});
  const meta=await pool.query("select created_at from scoring_meta where key='first-clear-v2'");
  return {range,entries:rows.slice(0,LEADERBOARD_LIMIT).map(entry),me:rows.find(r=>String(r.player_id)===String(playerId))?entry(rows.find(r=>String(r.player_id)===String(playerId))):null,
-   period:bounds,trackingSince:meta.rows[0]?.created_at,metric:range==='all'?'累计首次通关':'期间首次通关'};
+   period:bounds,trackingSince:meta.rows[0]?.created_at,includesLegacy:rows.some(r=>r.legacy_completed>0),metric:range==='all'?'累计首次通关':'期间新增通关'};
 }
 
 // ---------------------------------------------------------------- 账号中心

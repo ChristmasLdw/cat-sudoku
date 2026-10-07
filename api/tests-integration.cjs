@@ -26,6 +26,30 @@ const admin=new Pool({connectionString:process.env.DATABASE_URL,connectionTimeou
   assert.equal((await S.leaderboard('day',a)).me.completed,1);assert.equal((await S.leaderboard('all',a)).me.completed,2);
   await S.pool.query('update completions set completed_at=null where player_id=$1',[a]);await S.initSchema();assert.equal((await S.leaderboard('day',a)).me,null);assert.equal((await S.leaderboard('all',a)).me.completed,2);
   await assert.rejects(S.recordAttempt(a,{...first,id:crypto.randomUUID(),cats:Array(l.size).fill(0)}));
+  // The real migration regression: legacy snapshots 25 -> 26 -> 47 were omitted.
+  const legacyPlayers=await S.pool.query("insert into players(lantecho_sub,display_name) values ('legacy','旧版玩家'),('no-baseline','首张快照'),('decrease','回退快照') returning id");
+  const [d,e,f]=legacyPlayers.rows.map(x=>x.id),legacyIds=catalog.slice(0,47).map(x=>x.id);
+  await S.pool.query('insert into progress(player_id,completed) values($1,$2)',[d,JSON.stringify(legacyIds)]);
+  await S.pool.query("update scoring_meta set created_at='2026-10-07T06:59:51Z' where key='first-clear-v2'");
+  await S.pool.query(`insert into snapshots(player_id,day,completed_count,updated_at) values
+   ($1,'2026-10-04',25,'2026-10-04T12:00:00Z'),($1,'2026-10-05',26,'2026-10-05T08:17:58Z'),($1,'2026-10-07',47,'2026-10-07T06:50:20Z'),
+   ($2,'2026-10-07',8,'2026-10-07T06:50:20Z'),
+   ($3,'2026-10-04',10,'2026-10-04T12:00:00Z'),($3,'2026-10-05',8,'2026-10-05T12:00:00Z'),($3,'2026-10-07',11,'2026-10-07T06:50:20Z')`,[d,e,f]);
+  const testNow=new Date('2026-10-07T08:00:00Z');await S.initSchema();await S.initSchema();
+  assert.equal((await S.leaderboard('day',d,testNow)).me.completed,21);
+  assert.equal((await S.leaderboard('week',d,testNow)).me.completed,22);
+  assert.equal((await S.leaderboard('all',d,testNow)).me.completed,47);
+  assert.equal((await S.leaderboard('day',d,testNow)).me.legacyCompleted,21);
+  assert.equal((await S.leaderboard('day',e,testNow)).me,null,'first snapshot has no known prior baseline');
+  assert.equal((await S.leaderboard('day',f,testNow)).me.completed,1,'counter rollback must not duplicate older gains');
+  assert.equal((await S.loadResults(d)).length,0,'no historical run times are fabricated');
+  await S.recordAttempt(d,run(catalog[47]));
+  await S.pool.query("update completions set completed_at='2026-10-07T08:00:00Z' where player_id=$1 and level_id=$2",[d,catalog[47].id]);
+  await S.initSchema();assert.equal((await S.leaderboard('day',d,testNow)).me.completed,22);
+  assert.equal((await S.leaderboard('week',d,testNow)).me.completed,23);
+  assert.equal((await S.leaderboard('all',d,testNow)).me.completed,48);
+  const existingRun=await S.loadResults(d);await S.initSchema();assert.deepEqual(await S.loadResults(d),existingRun,'migration never edits recorded times');
+  console.log('PASS legacy 21-day/22-week credits, idempotent recovery, no total double-count, unknown baseline excluded, snapshot rollback, new clears additive and run times untouched');
   console.log('PASS isolated PostgreSQL: migration, idempotent completion, concurrent progress union, calendar filtering, historical totals, per-level ties/bests/modes and invalid proof');
  }finally{await S.pool.end();await admin.query('drop schema '+schema+' cascade');await admin.end();console.log('Removed isolated test schema');}
 })().catch(e=>{console.error(e.message);process.exitCode=1;});

@@ -646,15 +646,15 @@ function renderRank(){
     const p=document.createElement('p');p.className='rank-me';
     p.textContent=mine
       ?('你的排名 '+mine.rank+' · 通关 '+mine.completed+' 关')
-      :(account&&account.signedIn?'你还没有上榜，过一关就会出现在这里。':'登录之后，你的成绩也会出现在这个榜上。');
+      :(account&&account.signedIn?(rankRange==='all'?'还没有已同步的首次通关记录。':'本期暂无已同步的新增通关；重玩已过关卡会更新用时榜。'):'登录后完成新关卡，成绩同步成功即可上榜。');
     return p;
   };
   if(rankBusy&&!rankRows){say('正在读取榜单…');return;}
   if(rankRows?.error){say('榜单暂时读不到，稍后再试。');return;}
   const entries=rankRows?.entries||[];
-  if(rankRows?.period){const d=v=>new Date(v).toLocaleDateString('zh-CN',{timeZone:'Asia/Shanghai'});say((rankRange==='day'?'今日':'本周')+'首次通关 · '+d(rankRows.period.start)+(rankRange==='week'?' — '+d(new Date(new Date(rankRows.period.end).getTime()-1)):'')+' · 北京时间');}
-  if(rankRange!=='all'&&rankRows?.trackingSince)say('新统计始于 '+new Date(rankRows.trackingSince).toLocaleDateString('zh-CN',{timeZone:'Asia/Shanghai'})+'；此前成绩保留在总榜。');
-  if(!entries.length){say('这个榜单还没有人上榜 —— 过一关就是第一名。');box.append(standing());return;}
+  if(rankRows?.period){const d=v=>new Date(v).toLocaleDateString('zh-CN',{timeZone:'Asia/Shanghai'});say((rankRange==='day'?'今日':'本周')+'新增通关 · '+d(rankRows.period.start)+(rankRange==='week'?' — '+d(new Date(new Date(rankRows.period.end).getTime()-1)):'')+' · 北京时间');}
+  if(rankRows?.includesLegacy)say('已补入旧版每日快照中的通关增量，按快照记载日期计入；历史用时保持不变。');
+  if(!entries.length){say('本期暂无已同步的新增通关记录。');box.append(standing());return;}
   const list=document.createElement('ol');list.className='rank-list';
   for(const entry of entries){
     const li=document.createElement('li');li.className='rank-item'+(entry.isMe?' is-me':'');
