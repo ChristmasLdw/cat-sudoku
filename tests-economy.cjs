@@ -9,4 +9,4 @@ for(const l of catalog){
  const wrong=Array(l.size*l.size).fill(0);wrong[solution[0]]=1;assert.throws(()=>Q.effect(l,wrong,'bell'));
 }
 assert.equal(require('node:fs').readFileSync('economy.js','utf8'),require('node:fs').readFileSync('api/economy-rules.js','utf8'));
-console.log('PASS 196 levels: safe bell/brush effects, no mutation, wrong notes rejected; reward amounts, daily cap and Beijing midnight');
+console.log('PASS 396 levels: safe bell/brush effects, no mutation, wrong notes rejected; reward amounts, daily cap and Beijing midnight');

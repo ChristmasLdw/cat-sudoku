@@ -1,6 +1,6 @@
 const assert=require('node:assert/strict'),E=require('./engine.js'),J=require('./journey.js'),levels=require('./levels.js'),fixtures=require('./screenshot-levels.json');
 const imported=levels.filter(l=>l.source?.type==='user-screenshot');
-assert.equal(levels.length,196);assert.equal(imported.length,7);assert.deepEqual(imported.map(l=>l.source.referenceLevel),[89,81,80,79,78,75,74]);
+assert.equal(levels.length,396);assert.equal(imported.length,7);assert.deepEqual(imported.map(l=>l.source.referenceLevel),[89,81,80,79,78,75,74]);
 assert.deepEqual(imported.map(l=>l.size),[9,8,7,8,8,9,9]);
 assert.deepEqual(imported.flatMap(l=>l.source.photos).sort((a,b)=>a-b),[1,2,3,4,5,6,7,8,9]);
 for(const fixture of fixtures){

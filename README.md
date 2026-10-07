@@ -2,7 +2,7 @@
 
 [在线游戏](https://christmasldw.com/cat-sudoku/) · [独立仓库](https://github.com/ChristmasLdw/cat-sudoku)
 
-原创猫咪 SVG 与界面，196 个棋盘（含用户截图还原的 7 个测试棋盘）。关卡编号、顺序、颜色区域均保持此次恢复的线上版本不变。网站首页由 christmasldw-homepage 仓库单独维护。
+原创猫咪 SVG 与界面，396 个棋盘（含用户截图还原的 7 个测试棋盘）。前 196 关的编号、顺序、颜色区域和难度保持不变；新关卡追加在最后。网站首页由 christmasldw-homepage 仓库单独维护。
 
 ## 本地运行
 
@@ -48,7 +48,7 @@
 
 运行 `node` 加以下测试文件：tests.cjs、tests-trial.cjs、tests-hints.cjs、tests-visual-hints.cjs、tests-coach.cjs、tests-journey.cjs、tests-screenshots.cjs、tests-expansion.cjs、tests-scoring.cjs、tests-sync.cjs。
 
-196 关由独立全排列验证唯一解；提示/教学检查合法性和操作完成条件；新增测试覆盖北京时间日/周边界、个人最佳、榜单请求竞态、并发同步和失败重试。
+396 关由独立全排列验证唯一解；提示/教学检查合法性和操作完成条件；新增测试覆盖北京时间日/周边界、个人最佳、榜单请求竞态、并发同步和失败重试。
 
 数据库集成测试：给 `api/tests-integration.cjs` 提供 DATABASE_URL 后执行。测试自动建立随机独立 schema，并在 finally 中删除自己的 schema；数据库角色需具备建 schema 权限。覆盖历史迁移、并发合并、重复请求、非法棋盘、单关最佳及并列排名，不写生产业务表。
 
@@ -72,3 +72,12 @@
 `economy.js` 是共享规则，构建时同步到 `api/economy-rules.js`。后端新增 `wallets` / `economy_ledger` 表，按账户行锁串行结算，客户端不提供余额和价格；奖励以成绩 ID 去重，兑换/使用以请求 ID 去重。断网结果不明时保留原请求，在商店点“重试上次操作”，或点击底部对应道具的“重试”，不会再次扣费。若棋盘已重开，重试只显示上次道具的坐标结果，不自动改动新棋盘。技巧图鉴从“我的”进入。
 
 发布需同步 `economy.js`、`app.js`、`index.html`、`styles.css` 和 `api/{server.js,economy.cjs,economy-rules.js}`，重启 API 执行增量建表；先备份数据库。规则测试 `node tests-economy.cjs`；数据库测试 `api/tests-economy.cjs` 在独立临时 schema 中验证并发、幂等、余额、历史保护和奖励周期。
+
+
+## 第 197–396 关扩展
+
+新增 200 个空盘：6×6、7×7、8×8 各 55 关，9×9 共 35 关。轻松 37、适中 46、偏难 103、很难 14 关，生成后一次性随机打散并固定编号；每连续 20 关至少有三档难度，不会在刷新时重排。
+
+`rate-level.cjs` 从空盘逐步调用推理器：只需唯一候选是轻松，需要颜色与行列锁定是适中，需要成对占位或一步反证是偏难，常规推理停住、需要假设是很难。此分档是算法对推理路径的估计，不代表真实玩家平均用时。原有 196 关评级不变。
+
+`append-200.cjs` 可在原 196 关版本复现本批生成，使用固定种子、连通区域生成和唯一解筛选；同色重命名、旋转和镜像视为重复。脚本在已扩展版本上会拒绝执行，防止重复添加。`level-pack-200-report.json` 记录编号、尺寸、难度和所需技巧，未存答案。发布必须同时更新 `levels.js`、`journey.js`、`index.html` 和服务端 `api/catalog.json`，重启 API 后再发布前端，保证新关卡能正确同步成绩、领奖和用道具。

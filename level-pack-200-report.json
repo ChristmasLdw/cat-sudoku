@@ -1,0 +1,2992 @@
+{
+  "pack": "more-200-20261007",
+  "seed": "cat-200-20261007",
+  "shuffleSeed": "0x20261007",
+  "levels": [
+    {
+      "number": 197,
+      "id": "garden-e5f7b70fdefd8946",
+      "size": 6,
+      "difficulty": 3,
+      "steps": 14,
+      "techniques": {
+        "region-single": 3,
+        "exclude": 5,
+        "region-row": 1,
+        "region-column": 1,
+        "row-region": 1,
+        "row-single": 1,
+        "column-single": 2,
+        "complete": 1
+      }
+    },
+    {
+      "number": 198,
+      "id": "garden-e52441cc2824630c",
+      "size": 6,
+      "difficulty": 3,
+      "steps": 12,
+      "techniques": {
+        "region-single": 6,
+        "exclude": 5,
+        "region-row": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 199,
+      "id": "garden-354c9cc416c65eeb",
+      "size": 6,
+      "difficulty": 4,
+      "steps": 15,
+      "techniques": {
+        "region-single": 5,
+        "exclude": 4,
+        "region-column": 3,
+        "pair-row": 1,
+        "lookahead-region": 1,
+        "row-single": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 200,
+      "id": "garden-37e6a822e9dd1c92",
+      "size": 7,
+      "difficulty": 4,
+      "steps": 16,
+      "techniques": {
+        "region-single": 4,
+        "exclude": 6,
+        "region-column": 1,
+        "row-single": 1,
+        "column-single": 2,
+        "region-row": 1,
+        "lookahead-region": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 201,
+      "id": "garden-07ae5a7cac257af1",
+      "size": 7,
+      "difficulty": 4,
+      "steps": 23,
+      "techniques": {
+        "region-single": 7,
+        "exclude": 6,
+        "region-column": 3,
+        "lookahead-region": 5,
+        "lines-pair-row": 1,
+        "column-region": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 202,
+      "id": "garden-ba0484aacdaff471",
+      "size": 9,
+      "difficulty": 4,
+      "steps": 25,
+      "techniques": {
+        "region-column": 3,
+        "region-row": 1,
+        "region-single": 6,
+        "exclude": 6,
+        "row-region": 3,
+        "column-region": 1,
+        "lines-pair-row": 1,
+        "column-single": 2,
+        "lookahead-region": 1,
+        "row-single": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 203,
+      "id": "garden-d555b279df9e9089",
+      "size": 6,
+      "difficulty": 2,
+      "steps": 10,
+      "techniques": {
+        "region-single": 6,
+        "exclude": 4,
+        "complete": 1
+      }
+    },
+    {
+      "number": 204,
+      "id": "garden-fa64e2f1831501dd",
+      "size": 9,
+      "difficulty": 5,
+      "steps": 17,
+      "techniques": {
+        "region-column": 5,
+        "pair-row": 3,
+        "region-single": 5,
+        "exclude": 4,
+        "trial": 1
+      }
+    },
+    {
+      "number": 205,
+      "id": "garden-6ec26c2cd9d33d37",
+      "size": 6,
+      "difficulty": 3,
+      "steps": 14,
+      "techniques": {
+        "region-single": 6,
+        "exclude": 5,
+        "region-row": 2,
+        "region-column": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 206,
+      "id": "garden-618c9ab3657f1cd9",
+      "size": 8,
+      "difficulty": 3,
+      "steps": 18,
+      "techniques": {
+        "region-single": 7,
+        "exclude": 7,
+        "region-column": 2,
+        "row-region": 1,
+        "row-single": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 207,
+      "id": "garden-b119c6c54892df1d",
+      "size": 8,
+      "difficulty": 4,
+      "steps": 26,
+      "techniques": {
+        "region-row": 3,
+        "pair-column": 1,
+        "lookahead-region": 6,
+        "row-region": 1,
+        "region-single": 7,
+        "exclude": 7,
+        "column-single": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 208,
+      "id": "garden-6bc81074553ebbd4",
+      "size": 8,
+      "difficulty": 4,
+      "steps": 23,
+      "techniques": {
+        "region-column": 3,
+        "region-row": 1,
+        "lines-pair-row": 1,
+        "lines-pair-column": 1,
+        "lookahead-region": 2,
+        "region-single": 7,
+        "exclude": 7,
+        "row-single": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 209,
+      "id": "garden-99573e5f84c33adc",
+      "size": 8,
+      "difficulty": 2,
+      "steps": 15,
+      "techniques": {
+        "region-single": 8,
+        "exclude": 7,
+        "complete": 1
+      }
+    },
+    {
+      "number": 210,
+      "id": "garden-cf45ffb142fd7cd4",
+      "size": 6,
+      "difficulty": 4,
+      "steps": 17,
+      "techniques": {
+        "region-row": 1,
+        "region-column": 2,
+        "region-single": 5,
+        "exclude": 5,
+        "row-region": 2,
+        "row-single": 1,
+        "lookahead-region": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 211,
+      "id": "garden-a509afde0c01e9bd",
+      "size": 8,
+      "difficulty": 4,
+      "steps": 22,
+      "techniques": {
+        "region-single": 4,
+        "exclude": 6,
+        "region-column": 3,
+        "region-row": 1,
+        "column-region": 2,
+        "row-single": 4,
+        "lookahead-region": 2,
+        "complete": 1
+      }
+    },
+    {
+      "number": 212,
+      "id": "garden-f387747279044c36",
+      "size": 7,
+      "difficulty": 3,
+      "steps": 14,
+      "techniques": {
+        "region-single": 6,
+        "exclude": 6,
+        "region-column": 1,
+        "row-single": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 213,
+      "id": "garden-82c0285d71d32a98",
+      "size": 8,
+      "difficulty": 2,
+      "steps": 15,
+      "techniques": {
+        "region-single": 7,
+        "exclude": 7,
+        "row-single": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 214,
+      "id": "garden-f0d5269b4c63b2ae",
+      "size": 7,
+      "difficulty": 4,
+      "steps": 16,
+      "techniques": {
+        "region-single": 7,
+        "exclude": 6,
+        "region-row": 2,
+        "lookahead-region": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 215,
+      "id": "garden-5153a1a2bc45b4aa",
+      "size": 7,
+      "difficulty": 3,
+      "steps": 17,
+      "techniques": {
+        "region-single": 7,
+        "exclude": 6,
+        "region-column": 2,
+        "region-row": 2,
+        "complete": 1
+      }
+    },
+    {
+      "number": 216,
+      "id": "garden-987e47a719cc0e6b",
+      "size": 6,
+      "difficulty": 4,
+      "steps": 18,
+      "techniques": {
+        "region-row": 1,
+        "pair-row": 1,
+        "column-region": 2,
+        "lookahead-region": 3,
+        "region-single": 5,
+        "exclude": 5,
+        "column-single": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 217,
+      "id": "garden-2a704ac408deaebd",
+      "size": 8,
+      "difficulty": 4,
+      "steps": 23,
+      "techniques": {
+        "region-row": 2,
+        "region-column": 1,
+        "pair-row": 1,
+        "column-region": 1,
+        "lookahead-region": 3,
+        "region-single": 6,
+        "exclude": 7,
+        "column-single": 1,
+        "row-single": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 218,
+      "id": "garden-ba95a15994305f2d",
+      "size": 6,
+      "difficulty": 5,
+      "steps": 7,
+      "techniques": {
+        "region-single": 1,
+        "exclude": 1,
+        "region-column": 1,
+        "row-region": 3,
+        "pair-column": 1,
+        "trial": 1
+      }
+    },
+    {
+      "number": 219,
+      "id": "garden-0843db1ab490433e",
+      "size": 8,
+      "difficulty": 4,
+      "steps": 18,
+      "techniques": {
+        "region-single": 8,
+        "exclude": 7,
+        "region-column": 1,
+        "pair-row": 1,
+        "lookahead-region": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 220,
+      "id": "garden-8080ed7d98e92791",
+      "size": 7,
+      "difficulty": 4,
+      "steps": 20,
+      "techniques": {
+        "region-column": 3,
+        "region-row": 1,
+        "row-region": 1,
+        "pair-column": 1,
+        "lookahead-region": 1,
+        "region-single": 7,
+        "exclude": 6,
+        "complete": 1
+      }
+    },
+    {
+      "number": 221,
+      "id": "garden-62d9a336c766322b",
+      "size": 8,
+      "difficulty": 2,
+      "steps": 15,
+      "techniques": {
+        "region-single": 8,
+        "exclude": 7,
+        "complete": 1
+      }
+    },
+    {
+      "number": 222,
+      "id": "garden-ecd6176644555125",
+      "size": 8,
+      "difficulty": 4,
+      "steps": 21,
+      "techniques": {
+        "region-single": 6,
+        "exclude": 7,
+        "region-row": 3,
+        "row-region": 1,
+        "column-region": 1,
+        "column-single": 2,
+        "lookahead-region": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 223,
+      "id": "garden-5d27c1e5c4d915b2",
+      "size": 6,
+      "difficulty": 4,
+      "steps": 17,
+      "techniques": {
+        "region-single": 6,
+        "exclude": 5,
+        "region-row": 3,
+        "pair-column": 1,
+        "lookahead-region": 2,
+        "complete": 1
+      }
+    },
+    {
+      "number": 224,
+      "id": "garden-e5e31c7e6acf01fa",
+      "size": 6,
+      "difficulty": 4,
+      "steps": 18,
+      "techniques": {
+        "region-single": 5,
+        "exclude": 5,
+        "region-column": 2,
+        "pair-row": 1,
+        "lookahead-region": 3,
+        "pair-column": 1,
+        "row-single": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 225,
+      "id": "garden-687870c7629b15f9",
+      "size": 7,
+      "difficulty": 4,
+      "steps": 17,
+      "techniques": {
+        "region-single": 6,
+        "exclude": 6,
+        "region-column": 2,
+        "row-region": 1,
+        "lookahead-region": 1,
+        "row-single": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 226,
+      "id": "garden-230bfdd1b1441d45",
+      "size": 7,
+      "difficulty": 2,
+      "steps": 12,
+      "techniques": {
+        "region-single": 7,
+        "exclude": 5,
+        "complete": 1
+      }
+    },
+    {
+      "number": 227,
+      "id": "garden-45ab00975d2fd7f0",
+      "size": 8,
+      "difficulty": 3,
+      "steps": 17,
+      "techniques": {
+        "region-single": 8,
+        "exclude": 7,
+        "region-row": 2,
+        "complete": 1
+      }
+    },
+    {
+      "number": 228,
+      "id": "garden-bf81e6ca34099064",
+      "size": 6,
+      "difficulty": 4,
+      "steps": 19,
+      "techniques": {
+        "pair-column": 1,
+        "region-column": 3,
+        "lookahead-region": 3,
+        "lines-pair-row": 1,
+        "row-single": 1,
+        "exclude": 5,
+        "region-single": 5,
+        "complete": 1
+      }
+    },
+    {
+      "number": 229,
+      "id": "garden-b54219c0e06679d1",
+      "size": 8,
+      "difficulty": 4,
+      "steps": 22,
+      "techniques": {
+        "region-column": 2,
+        "region-row": 3,
+        "row-region": 1,
+        "pair-row": 1,
+        "pair-column": 1,
+        "region-single": 7,
+        "exclude": 5,
+        "lookahead-region": 1,
+        "row-single": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 230,
+      "id": "garden-20c1cdd75d04b2e8",
+      "size": 8,
+      "difficulty": 5,
+      "steps": 15,
+      "techniques": {
+        "region-single": 2,
+        "exclude": 2,
+        "region-column": 1,
+        "region-row": 5,
+        "lines-pair-column": 1,
+        "lookahead-region": 4,
+        "trial": 1
+      }
+    },
+    {
+      "number": 231,
+      "id": "garden-bb9e4b338ff1918a",
+      "size": 7,
+      "difficulty": 4,
+      "steps": 17,
+      "techniques": {
+        "region-single": 4,
+        "exclude": 6,
+        "region-column": 3,
+        "row-single": 3,
+        "lookahead-region": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 232,
+      "id": "garden-95220356fb1760d0",
+      "size": 7,
+      "difficulty": 3,
+      "steps": 14,
+      "techniques": {
+        "region-single": 7,
+        "exclude": 6,
+        "region-row": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 233,
+      "id": "garden-d1e4fc041609fa07",
+      "size": 9,
+      "difficulty": 4,
+      "steps": 28,
+      "techniques": {
+        "region-single": 8,
+        "exclude": 8,
+        "region-column": 5,
+        "pair-column": 1,
+        "lookahead-region": 4,
+        "lines-pair-row": 1,
+        "row-single": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 234,
+      "id": "garden-a1454a0ec34ef275",
+      "size": 9,
+      "difficulty": 4,
+      "steps": 22,
+      "techniques": {
+        "region-single": 8,
+        "exclude": 7,
+        "region-column": 1,
+        "region-row": 3,
+        "lines-pair-column": 1,
+        "lookahead-region": 1,
+        "column-single": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 235,
+      "id": "garden-555abc26c66470af",
+      "size": 6,
+      "difficulty": 3,
+      "steps": 12,
+      "techniques": {
+        "region-single": 5,
+        "exclude": 5,
+        "region-row": 1,
+        "column-single": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 236,
+      "id": "garden-e14e2fcb8ca92326",
+      "size": 7,
+      "difficulty": 3,
+      "steps": 14,
+      "techniques": {
+        "region-single": 6,
+        "exclude": 6,
+        "region-row": 1,
+        "column-single": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 237,
+      "id": "garden-cf8ed655827efb84",
+      "size": 6,
+      "difficulty": 4,
+      "steps": 14,
+      "techniques": {
+        "region-column": 2,
+        "region-single": 6,
+        "exclude": 5,
+        "lookahead-region": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 238,
+      "id": "garden-80f96d8fdffbd81e",
+      "size": 8,
+      "difficulty": 3,
+      "steps": 19,
+      "techniques": {
+        "region-single": 6,
+        "exclude": 7,
+        "region-column": 3,
+        "row-region": 1,
+        "row-single": 2,
+        "complete": 1
+      }
+    },
+    {
+      "number": 239,
+      "id": "garden-75ffb5cca86f0da6",
+      "size": 9,
+      "difficulty": 2,
+      "steps": 17,
+      "techniques": {
+        "region-single": 8,
+        "exclude": 8,
+        "column-single": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 240,
+      "id": "garden-a88c431d18bc8df8",
+      "size": 9,
+      "difficulty": 4,
+      "steps": 23,
+      "techniques": {
+        "region-single": 8,
+        "exclude": 8,
+        "region-column": 2,
+        "pair-row": 1,
+        "lookahead-region": 3,
+        "row-single": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 241,
+      "id": "garden-86d46fd78e5122f5",
+      "size": 9,
+      "difficulty": 3,
+      "steps": 19,
+      "techniques": {
+        "region-single": 9,
+        "exclude": 7,
+        "region-row": 2,
+        "region-column": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 242,
+      "id": "garden-c33438e25c8eb7da",
+      "size": 6,
+      "difficulty": 4,
+      "steps": 13,
+      "techniques": {
+        "region-single": 6,
+        "exclude": 5,
+        "region-column": 1,
+        "lookahead-region": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 243,
+      "id": "garden-fc480e14e8076ce2",
+      "size": 8,
+      "difficulty": 2,
+      "steps": 15,
+      "techniques": {
+        "region-single": 8,
+        "exclude": 7,
+        "complete": 1
+      }
+    },
+    {
+      "number": 244,
+      "id": "garden-a6d78edf0ecfef7a",
+      "size": 8,
+      "difficulty": 4,
+      "steps": 19,
+      "techniques": {
+        "region-single": 8,
+        "exclude": 7,
+        "region-column": 3,
+        "lookahead-region": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 245,
+      "id": "garden-b8f96959fc85ef9c",
+      "size": 8,
+      "difficulty": 2,
+      "steps": 15,
+      "techniques": {
+        "region-single": 6,
+        "exclude": 7,
+        "row-single": 2,
+        "complete": 1
+      }
+    },
+    {
+      "number": 246,
+      "id": "garden-2016b756271df011",
+      "size": 9,
+      "difficulty": 2,
+      "steps": 17,
+      "techniques": {
+        "region-single": 9,
+        "exclude": 8,
+        "complete": 1
+      }
+    },
+    {
+      "number": 247,
+      "id": "garden-57a30444f4ff915b",
+      "size": 9,
+      "difficulty": 3,
+      "steps": 18,
+      "techniques": {
+        "region-single": 8,
+        "exclude": 8,
+        "region-row": 1,
+        "column-single": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 248,
+      "id": "garden-ffa5b084447f4179",
+      "size": 7,
+      "difficulty": 3,
+      "steps": 17,
+      "techniques": {
+        "region-single": 7,
+        "exclude": 6,
+        "region-row": 3,
+        "region-column": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 249,
+      "id": "garden-88f991e4f218854f",
+      "size": 6,
+      "difficulty": 4,
+      "steps": 20,
+      "techniques": {
+        "region-column": 2,
+        "region-row": 1,
+        "lines-pair-row": 1,
+        "lookahead-region": 5,
+        "region-single": 6,
+        "exclude": 4,
+        "pair-column": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 250,
+      "id": "garden-4dd363edfb2437f8",
+      "size": 7,
+      "difficulty": 4,
+      "steps": 17,
+      "techniques": {
+        "region-row": 1,
+        "region-single": 7,
+        "exclude": 6,
+        "region-column": 2,
+        "lookahead-region": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 251,
+      "id": "garden-64468ce4ca350427",
+      "size": 9,
+      "difficulty": 4,
+      "steps": 23,
+      "techniques": {
+        "region-single": 9,
+        "exclude": 8,
+        "region-column": 1,
+        "region-row": 3,
+        "lookahead-region": 2,
+        "complete": 1
+      }
+    },
+    {
+      "number": 252,
+      "id": "garden-b4422874e0f966be",
+      "size": 6,
+      "difficulty": 2,
+      "steps": 11,
+      "techniques": {
+        "region-single": 6,
+        "exclude": 5,
+        "complete": 1
+      }
+    },
+    {
+      "number": 253,
+      "id": "garden-3ebac3b22601c231",
+      "size": 7,
+      "difficulty": 5,
+      "steps": 11,
+      "techniques": {
+        "region-row": 2,
+        "region-column": 2,
+        "lookahead-region": 7,
+        "trial": 1
+      }
+    },
+    {
+      "number": 254,
+      "id": "garden-cfab8d03111f2bc7",
+      "size": 8,
+      "difficulty": 3,
+      "steps": 17,
+      "techniques": {
+        "region-single": 7,
+        "exclude": 7,
+        "region-row": 1,
+        "region-column": 1,
+        "row-single": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 255,
+      "id": "garden-d342247ee1e68e8d",
+      "size": 6,
+      "difficulty": 4,
+      "steps": 12,
+      "techniques": {
+        "region-single": 6,
+        "exclude": 5,
+        "lookahead-region": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 256,
+      "id": "garden-0a98ffb19358aa3a",
+      "size": 8,
+      "difficulty": 4,
+      "steps": 20,
+      "techniques": {
+        "region-single": 8,
+        "exclude": 7,
+        "region-row": 3,
+        "region-column": 1,
+        "lookahead-region": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 257,
+      "id": "garden-35a06cbbc58cb6cf",
+      "size": 9,
+      "difficulty": 3,
+      "steps": 21,
+      "techniques": {
+        "region-row": 2,
+        "region-column": 2,
+        "region-single": 9,
+        "exclude": 8,
+        "complete": 1
+      }
+    },
+    {
+      "number": 258,
+      "id": "garden-95be87cbd5fbd4a8",
+      "size": 8,
+      "difficulty": 4,
+      "steps": 23,
+      "techniques": {
+        "region-single": 7,
+        "exclude": 7,
+        "region-column": 2,
+        "lines-pair-column": 1,
+        "lines-pair-row": 2,
+        "column-region": 1,
+        "lookahead-region": 2,
+        "row-single": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 259,
+      "id": "garden-a4675d34c55ba849",
+      "size": 7,
+      "difficulty": 4,
+      "steps": 16,
+      "techniques": {
+        "region-single": 6,
+        "exclude": 6,
+        "region-row": 1,
+        "column-region": 1,
+        "column-single": 1,
+        "lookahead-region": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 260,
+      "id": "garden-b0ed6799c027477d",
+      "size": 6,
+      "difficulty": 3,
+      "steps": 12,
+      "techniques": {
+        "region-single": 6,
+        "exclude": 5,
+        "region-column": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 261,
+      "id": "garden-e3992eb8fe43db1e",
+      "size": 9,
+      "difficulty": 4,
+      "steps": 21,
+      "techniques": {
+        "region-single": 6,
+        "exclude": 8,
+        "region-row": 3,
+        "column-single": 3,
+        "lookahead-region": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 262,
+      "id": "garden-6c79fce8b9b0d8ff",
+      "size": 9,
+      "difficulty": 4,
+      "steps": 22,
+      "techniques": {
+        "region-single": 7,
+        "exclude": 8,
+        "region-row": 1,
+        "row-region": 2,
+        "column-region": 1,
+        "column-single": 2,
+        "lookahead-region": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 263,
+      "id": "garden-d5750338a0e4655b",
+      "size": 7,
+      "difficulty": 4,
+      "steps": 18,
+      "techniques": {
+        "region-row": 2,
+        "pair-column": 1,
+        "region-column": 1,
+        "region-single": 5,
+        "exclude": 6,
+        "row-region": 1,
+        "row-single": 2,
+        "complete": 1
+      }
+    },
+    {
+      "number": 264,
+      "id": "garden-e401e0eba604e0a4",
+      "size": 7,
+      "difficulty": 4,
+      "steps": 14,
+      "techniques": {
+        "region-single": 7,
+        "exclude": 5,
+        "lookahead-region": 2,
+        "complete": 1
+      }
+    },
+    {
+      "number": 265,
+      "id": "garden-9bf2f0543128b489",
+      "size": 6,
+      "difficulty": 3,
+      "steps": 12,
+      "techniques": {
+        "region-single": 6,
+        "exclude": 5,
+        "region-row": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 266,
+      "id": "garden-0e911e4c8c1b9cd6",
+      "size": 9,
+      "difficulty": 5,
+      "steps": 19,
+      "techniques": {
+        "region-single": 4,
+        "exclude": 4,
+        "region-row": 3,
+        "pair-column": 1,
+        "lines-pair-column": 1,
+        "column-single": 1,
+        "region-column": 2,
+        "lookahead-region": 2,
+        "pair-row": 1,
+        "trial": 1
+      }
+    },
+    {
+      "number": 267,
+      "id": "garden-e53870f56986abb0",
+      "size": 8,
+      "difficulty": 5,
+      "steps": 20,
+      "techniques": {
+        "region-row": 4,
+        "pair-row": 1,
+        "pair-column": 3,
+        "row-region": 1,
+        "lookahead-region": 4,
+        "row-single": 1,
+        "exclude": 3,
+        "region-single": 3,
+        "trial": 1
+      }
+    },
+    {
+      "number": 268,
+      "id": "garden-2b7fd818dac2334a",
+      "size": 7,
+      "difficulty": 4,
+      "steps": 19,
+      "techniques": {
+        "region-row": 2,
+        "pair-row": 1,
+        "region-column": 1,
+        "column-region": 2,
+        "column-single": 1,
+        "exclude": 5,
+        "region-single": 6,
+        "lookahead-region": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 269,
+      "id": "garden-d26341335156964e",
+      "size": 7,
+      "difficulty": 3,
+      "steps": 17,
+      "techniques": {
+        "region-single": 4,
+        "exclude": 6,
+        "region-row": 2,
+        "region-column": 1,
+        "row-region": 1,
+        "row-single": 1,
+        "column-single": 2,
+        "complete": 1
+      }
+    },
+    {
+      "number": 270,
+      "id": "garden-54fcdf42c33eb5fa",
+      "size": 6,
+      "difficulty": 2,
+      "steps": 10,
+      "techniques": {
+        "region-single": 6,
+        "exclude": 4,
+        "complete": 1
+      }
+    },
+    {
+      "number": 271,
+      "id": "garden-bf9450bbfd4690bb",
+      "size": 7,
+      "difficulty": 4,
+      "steps": 24,
+      "techniques": {
+        "region-single": 6,
+        "exclude": 5,
+        "region-column": 1,
+        "region-row": 3,
+        "lookahead-region": 7,
+        "lines-pair-column": 1,
+        "row-single": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 272,
+      "id": "garden-94c8651b94e1822b",
+      "size": 8,
+      "difficulty": 3,
+      "steps": 16,
+      "techniques": {
+        "region-single": 8,
+        "exclude": 7,
+        "region-row": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 273,
+      "id": "garden-f3d48dc5c03d09b1",
+      "size": 6,
+      "difficulty": 4,
+      "steps": 13,
+      "techniques": {
+        "region-single": 5,
+        "exclude": 5,
+        "region-column": 1,
+        "pair-row": 1,
+        "row-single": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 274,
+      "id": "garden-1ac3e46e9522f935",
+      "size": 6,
+      "difficulty": 2,
+      "steps": 11,
+      "techniques": {
+        "region-single": 6,
+        "exclude": 5,
+        "complete": 1
+      }
+    },
+    {
+      "number": 275,
+      "id": "garden-ed40ce5ff8a7d006",
+      "size": 8,
+      "difficulty": 4,
+      "steps": 17,
+      "techniques": {
+        "region-single": 8,
+        "exclude": 7,
+        "region-row": 1,
+        "lookahead-region": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 276,
+      "id": "garden-48226ec251ff07fa",
+      "size": 7,
+      "difficulty": 3,
+      "steps": 14,
+      "techniques": {
+        "region-single": 6,
+        "exclude": 6,
+        "region-row": 1,
+        "column-single": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 277,
+      "id": "garden-a80ad83b23b62b85",
+      "size": 6,
+      "difficulty": 4,
+      "steps": 14,
+      "techniques": {
+        "region-column": 2,
+        "region-single": 5,
+        "exclude": 5,
+        "lookahead-region": 1,
+        "row-single": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 278,
+      "id": "garden-af2dd40ec0303670",
+      "size": 9,
+      "difficulty": 4,
+      "steps": 31,
+      "techniques": {
+        "region-single": 9,
+        "exclude": 8,
+        "region-column": 4,
+        "lookahead-region": 9,
+        "pair-column": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 279,
+      "id": "garden-6bb057c637c6fd9e",
+      "size": 9,
+      "difficulty": 4,
+      "steps": 29,
+      "techniques": {
+        "region-row": 2,
+        "lines-pair-row": 1,
+        "row-region": 2,
+        "lookahead-region": 4,
+        "pair-column": 1,
+        "region-single": 8,
+        "exclude": 8,
+        "region-column": 2,
+        "row-single": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 280,
+      "id": "garden-85213c6deef78dba",
+      "size": 8,
+      "difficulty": 4,
+      "steps": 21,
+      "techniques": {
+        "region-single": 7,
+        "exclude": 7,
+        "region-column": 1,
+        "pair-row": 1,
+        "region-row": 1,
+        "column-region": 2,
+        "column-single": 1,
+        "lookahead-region": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 281,
+      "id": "garden-0fed590793f0dab6",
+      "size": 6,
+      "difficulty": 3,
+      "steps": 12,
+      "techniques": {
+        "region-single": 5,
+        "exclude": 5,
+        "region-row": 1,
+        "column-single": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 282,
+      "id": "garden-4ec0d5a45d5d902a",
+      "size": 6,
+      "difficulty": 2,
+      "steps": 11,
+      "techniques": {
+        "region-single": 6,
+        "exclude": 5,
+        "complete": 1
+      }
+    },
+    {
+      "number": 283,
+      "id": "garden-c63b9ca630e4339a",
+      "size": 6,
+      "difficulty": 4,
+      "steps": 15,
+      "techniques": {
+        "region-single": 6,
+        "exclude": 4,
+        "region-column": 2,
+        "region-row": 1,
+        "row-region": 1,
+        "lookahead-region": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 284,
+      "id": "garden-180123d4da1b026d",
+      "size": 9,
+      "difficulty": 4,
+      "steps": 29,
+      "techniques": {
+        "region-row": 4,
+        "region-column": 2,
+        "lookahead-region": 5,
+        "region-single": 8,
+        "exclude": 8,
+        "row-region": 1,
+        "row-single": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 285,
+      "id": "garden-736b29956d692cba",
+      "size": 9,
+      "difficulty": 2,
+      "steps": 17,
+      "techniques": {
+        "region-single": 8,
+        "exclude": 8,
+        "column-single": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 286,
+      "id": "garden-acd3b793b20e252a",
+      "size": 8,
+      "difficulty": 4,
+      "steps": 21,
+      "techniques": {
+        "region-single": 7,
+        "exclude": 7,
+        "region-row": 1,
+        "region-column": 3,
+        "pair-row": 1,
+        "lookahead-region": 1,
+        "row-single": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 287,
+      "id": "garden-00ec011d49979290",
+      "size": 9,
+      "difficulty": 4,
+      "steps": 24,
+      "techniques": {
+        "region-single": 9,
+        "exclude": 8,
+        "region-row": 3,
+        "lines-pair-column": 1,
+        "lookahead-region": 3,
+        "complete": 1
+      }
+    },
+    {
+      "number": 288,
+      "id": "garden-ede38f500ce6a51a",
+      "size": 9,
+      "difficulty": 4,
+      "steps": 23,
+      "techniques": {
+        "region-single": 9,
+        "exclude": 7,
+        "region-column": 1,
+        "region-row": 1,
+        "column-region": 3,
+        "lines-pair-row": 1,
+        "lookahead-region": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 289,
+      "id": "garden-352258bea3479760",
+      "size": 8,
+      "difficulty": 2,
+      "steps": 15,
+      "techniques": {
+        "region-single": 8,
+        "exclude": 7,
+        "complete": 1
+      }
+    },
+    {
+      "number": 290,
+      "id": "garden-01312bb92a773940",
+      "size": 6,
+      "difficulty": 5,
+      "steps": 8,
+      "techniques": {
+        "region-single": 2,
+        "exclude": 2,
+        "region-row": 3,
+        "pair-column": 1,
+        "trial": 1
+      }
+    },
+    {
+      "number": 291,
+      "id": "garden-f8276d0aabf7ae4c",
+      "size": 6,
+      "difficulty": 4,
+      "steps": 17,
+      "techniques": {
+        "region-single": 6,
+        "exclude": 4,
+        "region-column": 2,
+        "pair-row": 1,
+        "column-region": 2,
+        "lookahead-region": 2,
+        "complete": 1
+      }
+    },
+    {
+      "number": 292,
+      "id": "garden-02ba4fa16c69d682",
+      "size": 8,
+      "difficulty": 4,
+      "steps": 20,
+      "techniques": {
+        "region-single": 7,
+        "exclude": 6,
+        "region-row": 2,
+        "lines-pair-column": 1,
+        "column-single": 1,
+        "region-column": 1,
+        "lookahead-region": 2,
+        "complete": 1
+      }
+    },
+    {
+      "number": 293,
+      "id": "garden-5685e33a29e256c5",
+      "size": 7,
+      "difficulty": 3,
+      "steps": 15,
+      "techniques": {
+        "region-single": 7,
+        "exclude": 6,
+        "region-row": 2,
+        "complete": 1
+      }
+    },
+    {
+      "number": 294,
+      "id": "garden-c5a8a80213b0a16e",
+      "size": 7,
+      "difficulty": 4,
+      "steps": 17,
+      "techniques": {
+        "region-single": 7,
+        "exclude": 6,
+        "region-row": 1,
+        "lookahead-region": 3,
+        "complete": 1
+      }
+    },
+    {
+      "number": 295,
+      "id": "garden-628c8c046691ac6b",
+      "size": 7,
+      "difficulty": 4,
+      "steps": 20,
+      "techniques": {
+        "region-column": 3,
+        "region-row": 2,
+        "pair-row": 1,
+        "region-single": 7,
+        "exclude": 5,
+        "lookahead-region": 2,
+        "complete": 1
+      }
+    },
+    {
+      "number": 296,
+      "id": "garden-c0ad003542bfc0ef",
+      "size": 9,
+      "difficulty": 4,
+      "steps": 27,
+      "techniques": {
+        "region-single": 8,
+        "exclude": 8,
+        "region-column": 2,
+        "region-row": 1,
+        "pair-row": 2,
+        "lookahead-region": 5,
+        "row-single": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 297,
+      "id": "garden-6afc2798981d9961",
+      "size": 8,
+      "difficulty": 2,
+      "steps": 15,
+      "techniques": {
+        "region-single": 8,
+        "exclude": 7,
+        "complete": 1
+      }
+    },
+    {
+      "number": 298,
+      "id": "garden-1eafa527334bf7fb",
+      "size": 8,
+      "difficulty": 4,
+      "steps": 26,
+      "techniques": {
+        "region-row": 2,
+        "pair-row": 2,
+        "lookahead-region": 6,
+        "pair-column": 1,
+        "region-single": 8,
+        "exclude": 7,
+        "complete": 1
+      }
+    },
+    {
+      "number": 299,
+      "id": "garden-57d9239b9d78bd60",
+      "size": 7,
+      "difficulty": 2,
+      "steps": 12,
+      "techniques": {
+        "region-single": 7,
+        "exclude": 5,
+        "complete": 1
+      }
+    },
+    {
+      "number": 300,
+      "id": "garden-3ebf3e66d3bc4369",
+      "size": 6,
+      "difficulty": 4,
+      "steps": 15,
+      "techniques": {
+        "region-single": 6,
+        "exclude": 5,
+        "pair-column": 1,
+        "region-row": 2,
+        "lookahead-region": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 301,
+      "id": "garden-b4c14336f7987720",
+      "size": 7,
+      "difficulty": 4,
+      "steps": 21,
+      "techniques": {
+        "region-row": 1,
+        "region-column": 3,
+        "row-region": 1,
+        "column-single": 1,
+        "exclude": 6,
+        "lookahead-region": 3,
+        "row-single": 1,
+        "region-single": 5,
+        "complete": 1
+      }
+    },
+    {
+      "number": 302,
+      "id": "garden-73882fa44a50e62d",
+      "size": 7,
+      "difficulty": 3,
+      "steps": 17,
+      "techniques": {
+        "region-single": 5,
+        "exclude": 5,
+        "region-row": 2,
+        "region-column": 1,
+        "row-region": 1,
+        "row-single": 1,
+        "column-region": 1,
+        "column-single": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 303,
+      "id": "garden-5f77ba90b41e96c9",
+      "size": 7,
+      "difficulty": 3,
+      "steps": 13,
+      "techniques": {
+        "region-single": 7,
+        "exclude": 5,
+        "region-column": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 304,
+      "id": "garden-f3fbdb9cf2811287",
+      "size": 8,
+      "difficulty": 3,
+      "steps": 17,
+      "techniques": {
+        "region-single": 8,
+        "exclude": 7,
+        "region-column": 2,
+        "complete": 1
+      }
+    },
+    {
+      "number": 305,
+      "id": "garden-4c8aa653ae390ca3",
+      "size": 6,
+      "difficulty": 4,
+      "steps": 14,
+      "techniques": {
+        "region-single": 5,
+        "exclude": 4,
+        "region-row": 1,
+        "column-region": 1,
+        "column-single": 1,
+        "lookahead-region": 2,
+        "complete": 1
+      }
+    },
+    {
+      "number": 306,
+      "id": "garden-6e683a819d46266c",
+      "size": 8,
+      "difficulty": 4,
+      "steps": 21,
+      "techniques": {
+        "region-single": 8,
+        "exclude": 7,
+        "region-column": 1,
+        "lines-pair-column": 1,
+        "column-region": 1,
+        "lookahead-region": 1,
+        "region-row": 1,
+        "pair-row": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 307,
+      "id": "garden-bb4efe47e9fb69c0",
+      "size": 7,
+      "difficulty": 4,
+      "steps": 23,
+      "techniques": {
+        "region-column": 2,
+        "lines-pair-row": 1,
+        "row-region": 1,
+        "lines-pair-column": 1,
+        "lookahead-region": 5,
+        "region-single": 6,
+        "exclude": 6,
+        "row-single": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 308,
+      "id": "garden-3485b722732eaa3c",
+      "size": 8,
+      "difficulty": 2,
+      "steps": 15,
+      "techniques": {
+        "region-single": 8,
+        "exclude": 7,
+        "complete": 1
+      }
+    },
+    {
+      "number": 309,
+      "id": "garden-0e5d9e22b5f25ad1",
+      "size": 9,
+      "difficulty": 4,
+      "steps": 20,
+      "techniques": {
+        "region-single": 9,
+        "exclude": 7,
+        "region-row": 3,
+        "lookahead-region": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 310,
+      "id": "garden-a0798a9355fc9730",
+      "size": 9,
+      "difficulty": 4,
+      "steps": 22,
+      "techniques": {
+        "region-single": 9,
+        "exclude": 8,
+        "region-column": 1,
+        "region-row": 1,
+        "column-region": 1,
+        "lookahead-region": 2,
+        "complete": 1
+      }
+    },
+    {
+      "number": 311,
+      "id": "garden-e39e635f2c00c6c7",
+      "size": 8,
+      "difficulty": 2,
+      "steps": 15,
+      "techniques": {
+        "region-single": 8,
+        "exclude": 7,
+        "complete": 1
+      }
+    },
+    {
+      "number": 312,
+      "id": "garden-081f4c080a096e3c",
+      "size": 8,
+      "difficulty": 3,
+      "steps": 17,
+      "techniques": {
+        "region-single": 8,
+        "exclude": 7,
+        "region-row": 1,
+        "region-column": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 313,
+      "id": "garden-aa0a51a65ccfb80e",
+      "size": 7,
+      "difficulty": 4,
+      "steps": 17,
+      "techniques": {
+        "region-column": 1,
+        "pair-column": 1,
+        "lines-pair-row": 1,
+        "row-single": 3,
+        "exclude": 5,
+        "region-single": 4,
+        "lookahead-region": 2,
+        "complete": 1
+      }
+    },
+    {
+      "number": 314,
+      "id": "garden-13a42b244b518f27",
+      "size": 8,
+      "difficulty": 4,
+      "steps": 18,
+      "techniques": {
+        "region-single": 8,
+        "exclude": 7,
+        "region-row": 1,
+        "pair-column": 1,
+        "lookahead-region": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 315,
+      "id": "garden-271d599b31e56ac1",
+      "size": 6,
+      "difficulty": 3,
+      "steps": 11,
+      "techniques": {
+        "region-single": 6,
+        "exclude": 4,
+        "region-row": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 316,
+      "id": "garden-7eab7814c67f3556",
+      "size": 8,
+      "difficulty": 4,
+      "steps": 24,
+      "techniques": {
+        "region-single": 8,
+        "exclude": 7,
+        "region-row": 4,
+        "pair-column": 1,
+        "lookahead-region": 4,
+        "complete": 1
+      }
+    },
+    {
+      "number": 317,
+      "id": "garden-70b04df6ae634595",
+      "size": 7,
+      "difficulty": 2,
+      "steps": 13,
+      "techniques": {
+        "region-single": 7,
+        "exclude": 6,
+        "complete": 1
+      }
+    },
+    {
+      "number": 318,
+      "id": "garden-c76aaa0b5fa81d2a",
+      "size": 7,
+      "difficulty": 2,
+      "steps": 13,
+      "techniques": {
+        "region-single": 7,
+        "exclude": 6,
+        "complete": 1
+      }
+    },
+    {
+      "number": 319,
+      "id": "garden-776f09b52c4907cb",
+      "size": 9,
+      "difficulty": 5,
+      "steps": 19,
+      "techniques": {
+        "region-column": 3,
+        "lines-pair-row": 1,
+        "row-single": 2,
+        "exclude": 5,
+        "region-row": 1,
+        "lookahead-region": 4,
+        "region-single": 3,
+        "trial": 1
+      }
+    },
+    {
+      "number": 320,
+      "id": "garden-b4f876e8b773488e",
+      "size": 7,
+      "difficulty": 4,
+      "steps": 19,
+      "techniques": {
+        "region-single": 7,
+        "exclude": 6,
+        "region-row": 2,
+        "pair-row": 1,
+        "lines-pair-column": 1,
+        "lookahead-region": 2,
+        "complete": 1
+      }
+    },
+    {
+      "number": 321,
+      "id": "garden-6c8ba956f2d3913f",
+      "size": 8,
+      "difficulty": 4,
+      "steps": 28,
+      "techniques": {
+        "region-single": 8,
+        "exclude": 7,
+        "region-column": 2,
+        "region-row": 1,
+        "lines-pair-column": 1,
+        "lookahead-region": 7,
+        "lines-pair-row": 1,
+        "row-region": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 322,
+      "id": "garden-89738763eb8addd5",
+      "size": 7,
+      "difficulty": 4,
+      "steps": 18,
+      "techniques": {
+        "region-single": 6,
+        "exclude": 6,
+        "region-column": 1,
+        "column-region": 1,
+        "pair-row": 1,
+        "region-row": 1,
+        "lookahead-region": 1,
+        "row-single": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 323,
+      "id": "garden-da37b248cd1f063a",
+      "size": 7,
+      "difficulty": 3,
+      "steps": 14,
+      "techniques": {
+        "region-single": 6,
+        "exclude": 6,
+        "region-column": 1,
+        "row-single": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 324,
+      "id": "garden-8e6bdacb634d4d3a",
+      "size": 9,
+      "difficulty": 4,
+      "steps": 27,
+      "techniques": {
+        "region-single": 7,
+        "exclude": 8,
+        "region-column": 1,
+        "region-row": 2,
+        "lines-pair-column": 1,
+        "column-region": 1,
+        "column-single": 2,
+        "lines-pair-row": 1,
+        "lookahead-region": 4,
+        "complete": 1
+      }
+    },
+    {
+      "number": 325,
+      "id": "garden-9f36c340295f9562",
+      "size": 7,
+      "difficulty": 2,
+      "steps": 13,
+      "techniques": {
+        "region-single": 7,
+        "exclude": 6,
+        "complete": 1
+      }
+    },
+    {
+      "number": 326,
+      "id": "garden-3473bf2d347f204c",
+      "size": 8,
+      "difficulty": 3,
+      "steps": 15,
+      "techniques": {
+        "region-single": 8,
+        "exclude": 6,
+        "region-column": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 327,
+      "id": "garden-9a2a437fcf253a79",
+      "size": 7,
+      "difficulty": 4,
+      "steps": 19,
+      "techniques": {
+        "region-single": 7,
+        "exclude": 6,
+        "region-row": 1,
+        "lines-pair-column": 1,
+        "lookahead-region": 3,
+        "region-column": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 328,
+      "id": "garden-00e378b9343b8ee7",
+      "size": 8,
+      "difficulty": 4,
+      "steps": 18,
+      "techniques": {
+        "region-single": 8,
+        "exclude": 7,
+        "region-column": 1,
+        "lookahead-region": 2,
+        "complete": 1
+      }
+    },
+    {
+      "number": 329,
+      "id": "garden-40afc70b38c92bf3",
+      "size": 7,
+      "difficulty": 2,
+      "steps": 13,
+      "techniques": {
+        "region-single": 7,
+        "exclude": 6,
+        "complete": 1
+      }
+    },
+    {
+      "number": 330,
+      "id": "garden-11b9bd61b3279af9",
+      "size": 8,
+      "difficulty": 3,
+      "steps": 18,
+      "techniques": {
+        "region-row": 2,
+        "region-single": 8,
+        "exclude": 7,
+        "region-column": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 331,
+      "id": "garden-d5e44201d170df56",
+      "size": 6,
+      "difficulty": 2,
+      "steps": 11,
+      "techniques": {
+        "region-single": 6,
+        "exclude": 5,
+        "complete": 1
+      }
+    },
+    {
+      "number": 332,
+      "id": "garden-91b3ba829c2c7738",
+      "size": 7,
+      "difficulty": 3,
+      "steps": 16,
+      "techniques": {
+        "region-single": 7,
+        "exclude": 6,
+        "region-column": 2,
+        "region-row": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 333,
+      "id": "garden-041efecc45d40089",
+      "size": 6,
+      "difficulty": 4,
+      "steps": 16,
+      "techniques": {
+        "region-row": 3,
+        "region-single": 4,
+        "exclude": 5,
+        "column-single": 2,
+        "lookahead-region": 2,
+        "complete": 1
+      }
+    },
+    {
+      "number": 334,
+      "id": "garden-3eaa593eb3901020",
+      "size": 7,
+      "difficulty": 2,
+      "steps": 13,
+      "techniques": {
+        "region-single": 7,
+        "exclude": 6,
+        "complete": 1
+      }
+    },
+    {
+      "number": 335,
+      "id": "garden-e8de92153512a4db",
+      "size": 9,
+      "difficulty": 4,
+      "steps": 22,
+      "techniques": {
+        "region-single": 8,
+        "exclude": 8,
+        "region-row": 1,
+        "region-column": 3,
+        "row-single": 1,
+        "lookahead-region": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 336,
+      "id": "garden-08dcd7b51d2dce4e",
+      "size": 8,
+      "difficulty": 3,
+      "steps": 20,
+      "techniques": {
+        "region-column": 4,
+        "region-row": 1,
+        "region-single": 8,
+        "exclude": 7,
+        "complete": 1
+      }
+    },
+    {
+      "number": 337,
+      "id": "garden-6c8c90a3b1ddab0b",
+      "size": 8,
+      "difficulty": 4,
+      "steps": 21,
+      "techniques": {
+        "region-single": 8,
+        "exclude": 7,
+        "region-row": 2,
+        "pair-row": 1,
+        "lines-pair-column": 1,
+        "lookahead-region": 2,
+        "complete": 1
+      }
+    },
+    {
+      "number": 338,
+      "id": "garden-907ec53d885787e7",
+      "size": 7,
+      "difficulty": 4,
+      "steps": 15,
+      "techniques": {
+        "region-single": 7,
+        "exclude": 6,
+        "lookahead-region": 2,
+        "complete": 1
+      }
+    },
+    {
+      "number": 339,
+      "id": "garden-56a8af04f482e62f",
+      "size": 6,
+      "difficulty": 2,
+      "steps": 10,
+      "techniques": {
+        "region-single": 6,
+        "exclude": 4,
+        "complete": 1
+      }
+    },
+    {
+      "number": 340,
+      "id": "garden-2ce1168964034a18",
+      "size": 9,
+      "difficulty": 2,
+      "steps": 17,
+      "techniques": {
+        "region-single": 8,
+        "exclude": 8,
+        "row-single": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 341,
+      "id": "garden-b2818f985d3f2fb3",
+      "size": 9,
+      "difficulty": 4,
+      "steps": 32,
+      "techniques": {
+        "region-single": 9,
+        "exclude": 7,
+        "region-row": 4,
+        "lookahead-region": 9,
+        "pair-column": 2,
+        "row-region": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 342,
+      "id": "garden-6998d29e454e9e17",
+      "size": 7,
+      "difficulty": 4,
+      "steps": 23,
+      "techniques": {
+        "region-column": 3,
+        "column-region": 2,
+        "lookahead-region": 4,
+        "lines-pair-row": 1,
+        "row-single": 3,
+        "exclude": 6,
+        "region-single": 4,
+        "complete": 1
+      }
+    },
+    {
+      "number": 343,
+      "id": "garden-178cb5cd060eab19",
+      "size": 9,
+      "difficulty": 4,
+      "steps": 27,
+      "techniques": {
+        "region-column": 3,
+        "region-row": 2,
+        "lines-pair-row": 1,
+        "lines-pair-column": 1,
+        "column-single": 2,
+        "exclude": 8,
+        "region-single": 7,
+        "lookahead-region": 3,
+        "complete": 1
+      }
+    },
+    {
+      "number": 344,
+      "id": "garden-c00a3fc5a9dc61e7",
+      "size": 6,
+      "difficulty": 5,
+      "steps": 9,
+      "techniques": {
+        "region-single": 1,
+        "exclude": 1,
+        "region-column": 1,
+        "pair-column": 1,
+        "lines-pair-row": 1,
+        "lookahead-region": 4,
+        "trial": 1
+      }
+    },
+    {
+      "number": 345,
+      "id": "garden-2944921d8c330caa",
+      "size": 7,
+      "difficulty": 4,
+      "steps": 21,
+      "techniques": {
+        "region-column": 1,
+        "region-row": 3,
+        "region-single": 6,
+        "exclude": 6,
+        "lookahead-region": 3,
+        "lines-pair-column": 1,
+        "column-single": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 346,
+      "id": "garden-73028800c94439c6",
+      "size": 6,
+      "difficulty": 2,
+      "steps": 11,
+      "techniques": {
+        "region-single": 6,
+        "exclude": 5,
+        "complete": 1
+      }
+    },
+    {
+      "number": 347,
+      "id": "garden-e2c1c64bd8ed697c",
+      "size": 8,
+      "difficulty": 3,
+      "steps": 18,
+      "techniques": {
+        "region-single": 8,
+        "exclude": 7,
+        "region-column": 1,
+        "region-row": 2,
+        "complete": 1
+      }
+    },
+    {
+      "number": 348,
+      "id": "garden-408e4ad00a7e4597",
+      "size": 6,
+      "difficulty": 3,
+      "steps": 12,
+      "techniques": {
+        "region-single": 6,
+        "exclude": 5,
+        "region-column": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 349,
+      "id": "garden-1ed50cce013046fa",
+      "size": 8,
+      "difficulty": 4,
+      "steps": 30,
+      "techniques": {
+        "region-row": 3,
+        "region-column": 1,
+        "column-region": 1,
+        "pair-row": 1,
+        "lookahead-region": 11,
+        "row-single": 1,
+        "exclude": 5,
+        "column-single": 1,
+        "region-single": 6,
+        "complete": 1
+      }
+    },
+    {
+      "number": 350,
+      "id": "garden-2d9adac424ada51e",
+      "size": 8,
+      "difficulty": 4,
+      "steps": 22,
+      "techniques": {
+        "region-single": 7,
+        "exclude": 7,
+        "region-column": 2,
+        "row-region": 1,
+        "lookahead-region": 4,
+        "row-single": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 351,
+      "id": "garden-bc155a39d50e5ffd",
+      "size": 6,
+      "difficulty": 5,
+      "steps": 8,
+      "techniques": {
+        "region-column": 3,
+        "region-single": 2,
+        "exclude": 2,
+        "pair-row": 1,
+        "trial": 1
+      }
+    },
+    {
+      "number": 352,
+      "id": "garden-dc6d9b20de315780",
+      "size": 6,
+      "difficulty": 4,
+      "steps": 16,
+      "techniques": {
+        "region-single": 5,
+        "exclude": 5,
+        "region-column": 1,
+        "region-row": 1,
+        "pair-row": 1,
+        "lookahead-region": 2,
+        "column-single": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 353,
+      "id": "garden-ed1dd684380c77b1",
+      "size": 9,
+      "difficulty": 4,
+      "steps": 25,
+      "techniques": {
+        "region-single": 7,
+        "exclude": 7,
+        "region-column": 2,
+        "region-row": 2,
+        "pair-column": 2,
+        "lookahead-region": 2,
+        "pair-row": 1,
+        "column-single": 1,
+        "row-single": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 354,
+      "id": "garden-56121fb0f86f8651",
+      "size": 6,
+      "difficulty": 3,
+      "steps": 12,
+      "techniques": {
+        "region-single": 4,
+        "exclude": 5,
+        "region-row": 1,
+        "column-single": 2,
+        "complete": 1
+      }
+    },
+    {
+      "number": 355,
+      "id": "garden-c5aab6c7cc1a5bd3",
+      "size": 6,
+      "difficulty": 4,
+      "steps": 18,
+      "techniques": {
+        "region-single": 6,
+        "exclude": 4,
+        "region-row": 1,
+        "row-region": 1,
+        "column-region": 1,
+        "pair-column": 1,
+        "lookahead-region": 4,
+        "complete": 1
+      }
+    },
+    {
+      "number": 356,
+      "id": "garden-0043fb7506175692",
+      "size": 7,
+      "difficulty": 3,
+      "steps": 14,
+      "techniques": {
+        "region-single": 7,
+        "exclude": 6,
+        "region-column": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 357,
+      "id": "garden-9b082c8ed427004d",
+      "size": 6,
+      "difficulty": 3,
+      "steps": 14,
+      "techniques": {
+        "region-single": 6,
+        "exclude": 5,
+        "region-row": 2,
+        "region-column": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 358,
+      "id": "garden-3b2da50d2e63fed1",
+      "size": 7,
+      "difficulty": 4,
+      "steps": 19,
+      "techniques": {
+        "region-row": 4,
+        "region-single": 7,
+        "exclude": 6,
+        "lookahead-region": 2,
+        "complete": 1
+      }
+    },
+    {
+      "number": 359,
+      "id": "garden-04eddee1352a19aa",
+      "size": 6,
+      "difficulty": 4,
+      "steps": 17,
+      "techniques": {
+        "region-single": 4,
+        "exclude": 5,
+        "region-column": 1,
+        "column-region": 1,
+        "column-single": 1,
+        "lookahead-region": 3,
+        "region-row": 1,
+        "row-single": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 360,
+      "id": "garden-84adddf27de97cbd",
+      "size": 6,
+      "difficulty": 3,
+      "steps": 12,
+      "techniques": {
+        "region-single": 5,
+        "exclude": 5,
+        "region-column": 1,
+        "row-single": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 361,
+      "id": "garden-0158dfbad6939385",
+      "size": 7,
+      "difficulty": 2,
+      "steps": 13,
+      "techniques": {
+        "region-single": 7,
+        "exclude": 6,
+        "complete": 1
+      }
+    },
+    {
+      "number": 362,
+      "id": "garden-c3dd8af3e4f747d7",
+      "size": 6,
+      "difficulty": 4,
+      "steps": 18,
+      "techniques": {
+        "region-row": 1,
+        "region-column": 4,
+        "region-single": 6,
+        "exclude": 4,
+        "lookahead-region": 3,
+        "complete": 1
+      }
+    },
+    {
+      "number": 363,
+      "id": "garden-c5c0f6988632c310",
+      "size": 9,
+      "difficulty": 4,
+      "steps": 23,
+      "techniques": {
+        "region-single": 9,
+        "exclude": 8,
+        "region-column": 2,
+        "region-row": 3,
+        "lookahead-region": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 364,
+      "id": "garden-0b139ecbb6f06162",
+      "size": 8,
+      "difficulty": 3,
+      "steps": 18,
+      "techniques": {
+        "region-single": 7,
+        "exclude": 6,
+        "region-row": 2,
+        "column-region": 2,
+        "column-single": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 365,
+      "id": "garden-18f947270bce829a",
+      "size": 6,
+      "difficulty": 2,
+      "steps": 11,
+      "techniques": {
+        "region-single": 6,
+        "exclude": 5,
+        "complete": 1
+      }
+    },
+    {
+      "number": 366,
+      "id": "garden-541002339abb6d4e",
+      "size": 6,
+      "difficulty": 3,
+      "steps": 14,
+      "techniques": {
+        "region-single": 4,
+        "exclude": 5,
+        "region-column": 1,
+        "row-region": 2,
+        "row-single": 1,
+        "column-single": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 367,
+      "id": "garden-e3f29a9bf179bfc1",
+      "size": 6,
+      "difficulty": 2,
+      "steps": 10,
+      "techniques": {
+        "region-single": 6,
+        "exclude": 4,
+        "complete": 1
+      }
+    },
+    {
+      "number": 368,
+      "id": "garden-a3527e2475e90c60",
+      "size": 7,
+      "difficulty": 4,
+      "steps": 18,
+      "techniques": {
+        "region-single": 5,
+        "exclude": 6,
+        "region-column": 1,
+        "region-row": 1,
+        "column-region": 1,
+        "row-single": 1,
+        "lookahead-region": 2,
+        "column-single": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 369,
+      "id": "garden-26f1a577c0fbff74",
+      "size": 7,
+      "difficulty": 2,
+      "steps": 12,
+      "techniques": {
+        "region-single": 7,
+        "exclude": 5,
+        "complete": 1
+      }
+    },
+    {
+      "number": 370,
+      "id": "garden-3fa58d7f7ddd272f",
+      "size": 8,
+      "difficulty": 5,
+      "steps": 15,
+      "techniques": {
+        "region-single": 1,
+        "exclude": 4,
+        "region-row": 1,
+        "row-region": 1,
+        "row-single": 1,
+        "column-single": 2,
+        "column-region": 2,
+        "pair-row": 1,
+        "lookahead-region": 1,
+        "region-column": 1,
+        "trial": 1
+      }
+    },
+    {
+      "number": 371,
+      "id": "garden-578b7ac227814ce9",
+      "size": 8,
+      "difficulty": 3,
+      "steps": 17,
+      "techniques": {
+        "region-single": 8,
+        "exclude": 7,
+        "region-column": 1,
+        "region-row": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 372,
+      "id": "garden-ea8948a52fa5bf4b",
+      "size": 7,
+      "difficulty": 4,
+      "steps": 22,
+      "techniques": {
+        "region-column": 3,
+        "region-row": 1,
+        "pair-row": 1,
+        "region-single": 6,
+        "exclude": 6,
+        "row-single": 1,
+        "lookahead-region": 4,
+        "complete": 1
+      }
+    },
+    {
+      "number": 373,
+      "id": "garden-4419cbf830ceda74",
+      "size": 6,
+      "difficulty": 4,
+      "steps": 14,
+      "techniques": {
+        "region-single": 5,
+        "exclude": 5,
+        "column-region": 1,
+        "column-single": 1,
+        "row-region": 1,
+        "lookahead-region": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 374,
+      "id": "garden-08bc963b4c6653b9",
+      "size": 7,
+      "difficulty": 3,
+      "steps": 13,
+      "techniques": {
+        "region-single": 7,
+        "exclude": 5,
+        "region-column": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 375,
+      "id": "garden-0602313aabd01ef9",
+      "size": 8,
+      "difficulty": 2,
+      "steps": 15,
+      "techniques": {
+        "region-single": 8,
+        "exclude": 7,
+        "complete": 1
+      }
+    },
+    {
+      "number": 376,
+      "id": "garden-4e22f1f612d653ab",
+      "size": 8,
+      "difficulty": 4,
+      "steps": 17,
+      "techniques": {
+        "region-column": 2,
+        "pair-row": 1,
+        "region-single": 7,
+        "exclude": 6,
+        "row-single": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 377,
+      "id": "garden-8f1e6acf1ac7500a",
+      "size": 8,
+      "difficulty": 4,
+      "steps": 18,
+      "techniques": {
+        "region-single": 8,
+        "exclude": 7,
+        "region-column": 1,
+        "lookahead-region": 2,
+        "complete": 1
+      }
+    },
+    {
+      "number": 378,
+      "id": "garden-f3e9a7b97f34fa1f",
+      "size": 7,
+      "difficulty": 4,
+      "steps": 22,
+      "techniques": {
+        "region-row": 4,
+        "lookahead-region": 5,
+        "region-single": 7,
+        "exclude": 6,
+        "complete": 1
+      }
+    },
+    {
+      "number": 379,
+      "id": "garden-b155f088c2470d2c",
+      "size": 6,
+      "difficulty": 4,
+      "steps": 13,
+      "techniques": {
+        "region-single": 6,
+        "exclude": 4,
+        "column-region": 1,
+        "lookahead-region": 2,
+        "complete": 1
+      }
+    },
+    {
+      "number": 380,
+      "id": "garden-bcd66bc3d5391efe",
+      "size": 6,
+      "difficulty": 5,
+      "steps": 8,
+      "techniques": {
+        "region-row": 1,
+        "region-single": 1,
+        "exclude": 1,
+        "region-column": 2,
+        "pair-row": 1,
+        "pair-column": 1,
+        "lookahead-region": 1,
+        "trial": 1
+      }
+    },
+    {
+      "number": 381,
+      "id": "garden-a60e7ddd1b4ec6df",
+      "size": 8,
+      "difficulty": 3,
+      "steps": 19,
+      "techniques": {
+        "region-single": 6,
+        "exclude": 7,
+        "region-column": 3,
+        "column-region": 1,
+        "row-single": 2,
+        "complete": 1
+      }
+    },
+    {
+      "number": 382,
+      "id": "garden-20af4edd0e65a5d5",
+      "size": 8,
+      "difficulty": 2,
+      "steps": 15,
+      "techniques": {
+        "region-single": 8,
+        "exclude": 7,
+        "complete": 1
+      }
+    },
+    {
+      "number": 383,
+      "id": "garden-36cce721a8d04f17",
+      "size": 8,
+      "difficulty": 4,
+      "steps": 17,
+      "techniques": {
+        "region-single": 8,
+        "exclude": 6,
+        "region-column": 2,
+        "pair-row": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 384,
+      "id": "garden-dfc19df591de0bd2",
+      "size": 7,
+      "difficulty": 4,
+      "steps": 18,
+      "techniques": {
+        "region-single": 5,
+        "exclude": 6,
+        "region-row": 2,
+        "lookahead-region": 3,
+        "column-single": 2,
+        "complete": 1
+      }
+    },
+    {
+      "number": 385,
+      "id": "garden-5c7278c5d7dcd320",
+      "size": 7,
+      "difficulty": 4,
+      "steps": 19,
+      "techniques": {
+        "region-row": 1,
+        "region-single": 7,
+        "exclude": 6,
+        "region-column": 3,
+        "lookahead-region": 2,
+        "complete": 1
+      }
+    },
+    {
+      "number": 386,
+      "id": "garden-3c309a282d842f40",
+      "size": 9,
+      "difficulty": 4,
+      "steps": 28,
+      "techniques": {
+        "region-single": 7,
+        "exclude": 8,
+        "region-column": 2,
+        "region-row": 2,
+        "row-region": 1,
+        "row-single": 1,
+        "column-region": 1,
+        "column-single": 1,
+        "lookahead-region": 5,
+        "complete": 1
+      }
+    },
+    {
+      "number": 387,
+      "id": "garden-c9159c7a8bfa762e",
+      "size": 6,
+      "difficulty": 2,
+      "steps": 11,
+      "techniques": {
+        "region-single": 5,
+        "exclude": 5,
+        "row-single": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 388,
+      "id": "garden-63b3fab96f60c9db",
+      "size": 7,
+      "difficulty": 2,
+      "steps": 13,
+      "techniques": {
+        "region-single": 7,
+        "exclude": 6,
+        "complete": 1
+      }
+    },
+    {
+      "number": 389,
+      "id": "garden-6f52480e31787f11",
+      "size": 6,
+      "difficulty": 5,
+      "steps": 9,
+      "techniques": {
+        "region-single": 2,
+        "exclude": 2,
+        "region-row": 3,
+        "lookahead-region": 2,
+        "trial": 1
+      }
+    },
+    {
+      "number": 390,
+      "id": "garden-152d7c96662371f4",
+      "size": 9,
+      "difficulty": 4,
+      "steps": 23,
+      "techniques": {
+        "region-single": 9,
+        "exclude": 8,
+        "region-column": 3,
+        "column-region": 1,
+        "pair-row": 1,
+        "lookahead-region": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 391,
+      "id": "garden-1c9f8e9b6f2be17e",
+      "size": 6,
+      "difficulty": 3,
+      "steps": 11,
+      "techniques": {
+        "region-single": 6,
+        "exclude": 4,
+        "region-row": 1,
+        "complete": 1
+      }
+    },
+    {
+      "number": 392,
+      "id": "garden-e7f7691e8311c065",
+      "size": 9,
+      "difficulty": 3,
+      "steps": 21,
+      "techniques": {
+        "region-single": 9,
+        "exclude": 8,
+        "region-row": 2,
+        "region-column": 2,
+        "complete": 1
+      }
+    },
+    {
+      "number": 393,
+      "id": "garden-e3b9bcf701925e98",
+      "size": 9,
+      "difficulty": 4,
+      "steps": 22,
+      "techniques": {
+        "region-single": 9,
+        "exclude": 8,
+        "region-row": 1,
+        "column-region": 1,
+        "lookahead-region": 3,
+        "complete": 1
+      }
+    },
+    {
+      "number": 394,
+      "id": "garden-3e74783028cc951d",
+      "size": 6,
+      "difficulty": 4,
+      "steps": 18,
+      "techniques": {
+        "region-column": 2,
+        "pair-row": 1,
+        "region-row": 2,
+        "lookahead-region": 2,
+        "column-single": 2,
+        "exclude": 5,
+        "region-single": 4,
+        "complete": 1
+      }
+    },
+    {
+      "number": 395,
+      "id": "garden-469d93912d1a4b05",
+      "size": 7,
+      "difficulty": 2,
+      "steps": 13,
+      "techniques": {
+        "region-single": 7,
+        "exclude": 6,
+        "complete": 1
+      }
+    },
+    {
+      "number": 396,
+      "id": "garden-d3dd271802a02169",
+      "size": 8,
+      "difficulty": 5,
+      "steps": 12,
+      "techniques": {
+        "region-single": 4,
+        "exclude": 4,
+        "region-row": 2,
+        "lookahead-region": 2,
+        "trial": 1
+      }
+    }
+  ]
+}

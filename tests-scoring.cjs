@@ -1,6 +1,6 @@
 'use strict';
 const assert=require('node:assert/strict'),{period,validateAttempt}=require('./api/scoring.cjs'),R=require('./results.js'),E=require('./engine.js'),J=require('./journey.js'),levels=J.arrange(require('./levels.js')),catalog=require('./api/catalog.json');
-assert.equal(levels.length,196);assert.deepEqual(catalog,levels.map(l=>({id:l.id,size:l.size,regions:l.regions,givens:J.forLevel(l).givens})));
+assert.equal(levels.length,396);assert.deepEqual(catalog,levels.map(l=>({id:l.id,size:l.size,regions:l.regions,givens:J.forLevel(l).givens})));
 assert.deepEqual(period('day',new Date('2026-10-07T15:59:59Z')),{start:'2026-10-06T16:00:00.000Z',end:'2026-10-07T16:00:00.000Z',timezone:'Asia/Shanghai'});
 assert.equal(period('day',new Date('2026-10-07T16:00:00Z')).start,'2026-10-07T16:00:00.000Z');
 assert.equal(period('week',new Date('2026-10-11T15:59:59Z')).start,'2026-10-04T16:00:00.000Z');
@@ -18,4 +18,4 @@ assert.equal(R.activeTime({started:false},true,false,'game'),true);
 for(const g of [{started:true,paused:true},{started:true,won:true}])assert.equal(R.activeTime(g,true,false,'game'),false);
 const progress=J.validProgress({completed:[levels[0].id,'old-level'],skills:{seen:[1,1,99],practiced:[2]}},levels);
 assert.deepEqual(J.validProgress(progress,levels).stale,['old-level']);assert.deepEqual(progress.skills,{seen:[1],practiced:[2]});
-console.log('PASS 196 server catalog/proof checks, Shanghai calendar boundaries, independent/assisted bests, deduplication, pause views and stale/skill persistence');
+console.log('PASS 396 server catalog/proof checks, Shanghai calendar boundaries, independent/assisted bests, deduplication, pause views and stale/skill persistence');
